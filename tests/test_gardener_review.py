@@ -113,6 +113,14 @@ def test_review_guard_and_merge():
     assert "type user" in held("user", {"owner-reads-plain-tables.md": "\nThe owner also likes the list stapled.\n"})
     assert "mentions Mara" in held("human", {"holiday-multiplier.md": "\nMara said 1.6 is right.\n"}, human="Mara")
     assert "> 40%" in held("big", {"holiday-multiplier.md": "\n" + "\n".join("line %d" % i for i in range(12)) + "\n"})
+    # a replaced line counts once, as the Gardener counts it: a 30% in-place rewrite reaches the reviewer
+    assert R.lines_changed("-a\n+b\n") == 1 and R.lines_changed("+a\n+b\n") == 2 and R.lines_changed("-a\n-b\n+c\n") == 2
+    text = open(os.path.join(repo, "holiday-multiplier.md")).read(); fm_block, body = text.split("---\n", 2)[1], text.split("---\n", 2)[2]
+    lines = body.splitlines(); k = max(1, int(len(lines) * 0.3))
+    rewritten = "---\n" + fm_block + "---\n" + "\n".join(["rewritten line %d" % i for i in range(k)] + lines[k:]) + "\n"
+    git(repo, "checkout", "-q", "-b", "t/thirty"); open(os.path.join(repo, "holiday-multiplier.md"), "w").write(rewritten)
+    git(repo, "commit", "-q", "-am", "thirty"); git(repo, "checkout", "-q", "main")
+    assert R.run("t/thirty", repo, complete=lambda s, u: "MERGE: fine", out=os.path.join(tmp, "r"), dry_run=True)[0] == "MERGE"
     fm_edit = open(os.path.join(repo, "holiday-multiplier.md")).read().replace("type: project", "type: reference")
     git(repo, "checkout", "-q", "-b", "t/fm"); open(os.path.join(repo, "holiday-multiplier.md"), "w").write(fm_edit)
     git(repo, "commit", "-q", "-am", "fm"); git(repo, "checkout", "-q", "main")

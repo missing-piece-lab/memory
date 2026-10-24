@@ -8,7 +8,8 @@
                 → {"results": [{slug, title, description, body, project, type, score, sim, related, verdict?}]}
   GET  /status  → {"ok", "nodes", "last_run", "flagged": [...]}      GET /healthz → {"ok", "nodes}   (no token)
   Every request but /healthz carries `Authorization: Bearer $RECALL_TOKEN`. Bind to loopback or a private interface,
-  never 0.0.0.0 — the API returns memory bodies.
+  never 0.0.0.0 — the API returns memory bodies. `--serve` on the in-process graph is for a first look only: it rewrites
+  the whole JSON file on every recall and is not safe under concurrent requests; production is GRAPH_DSN.
 
 Ranking is reciprocal rank fusion of two legs (keyword, vector), nothing more: no recency, no confidence, no weights.
 `score` is rank-based and cannot say "nothing relevant"; `sim` (cosine from the vector leg, None for a keyword-only

@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS findings (                 -- one row per memory per 
     run_id     BIGINT REFERENCES runs(id) ON DELETE CASCADE,
     node_id    BIGINT REFERENCES nodes(id) ON DELETE CASCADE,
     slug       TEXT NOT NULL,
-    result     TEXT NOT NULL,                         -- ok | drift | changed | uncheckable_only
+    result     TEXT NOT NULL,                         -- ok | drift | changed | moved | elsewhere | uncheckable_only
     details    JSONB NOT NULL,                        -- [{ref, kind, status, found_in}]
     verdict    TEXT,                                  -- CONFIRMED | STALE | CONTRADICTED | UNCLEAR | NULL = not judged
     reason     TEXT,

@@ -84,6 +84,21 @@ def test_sample_judge_error_unverifiable_accepted():
     assert V.main(["--store", store, "--evidence", evidence, "--graph", os.path.join(tmp, "g.json"), "--out", os.path.join(tmp, "r3"), "--no-judge"]) == 0
 
 
+def test_elsewhere_is_not_evidence():
+    """A same-named file in another scope used to come back `ok` and get anchored; it is a hint, not evidence (2026-10-24)."""
+    tmp, store, evidence, g = world()
+    other = os.path.join(evidence, "othertool", "src"); os.makedirs(other)
+    open(os.path.join(other, "export_xlsx.py"), "w").write("# a different project's file with the same name\n")
+    counts, findings, path = V.run(store, g, V.discover(evidence), out=os.path.join(tmp, "r4"))
+    f = next(f for f in findings if f["slug"] == "spreadsheet-export-retired")
+    d = next(x for x in f["details"] if x["ref"] == "src/export_xlsx.py")
+    assert f["result"] == "elsewhere" and d["status"] == "elsewhere" and d["found_in"] == "othertool/src/export_xlsx.py", f
+    assert counts["drift"] == 0 and counts["elsewhere"] == 1 and "src/export_xlsx.py" not in g.anchors("spreadsheet-export-retired")
+    assert "## Elsewhere" in open(path).read()
+    # every other memory still resolves in its own scope, as before
+    assert counts["ok"] == 6 and counts["nodes"] == 7
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_"):

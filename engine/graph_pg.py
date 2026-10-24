@@ -50,7 +50,8 @@ class PostgresGraph:
         self.conn = psycopg.connect(dsn, autocommit=False)
 
     def ensure_schema(self, dim=None):
-        dim = dim or int(os.environ.get("EMBED_DIM", "768"))
+        from .embed import config
+        dim = dim or config()["dim"]                            # the same default per embedder kind as the startup check
         with open(SCHEMA, encoding="utf-8") as fh, self.conn.cursor() as cur:
             cur.execute(fh.read().replace("{dim}", str(dim)))
         self.conn.commit()
@@ -114,8 +115,9 @@ class PostgresGraph:
         return [(s, f"{t}\n{d}\n{b}") for s, t, d, b in self._q("SELECT slug, title, description, body FROM nodes WHERE embedding IS NULL", fetch="all")]
 
     def set_embedding(self, slug, vec):
-        if len(vec) != int(os.environ.get("EMBED_DIM", "768")):
-            raise ValueError(f"refusing to write a {len(vec)}-float vector for {slug}: EMBED_DIM is {os.environ.get('EMBED_DIM', '768')}")
+        from .embed import config
+        if len(vec) != config()["dim"]:
+            raise ValueError(f"refusing to write a {len(vec)}-float vector for {slug}: EMBED_DIM is {config()['dim']}")
         self._q("UPDATE nodes SET embedding=%s::vector WHERE slug=%s", (vec_literal(vec), slug))
 
     # ── recall ──────────────────────────────────────────────────────────────────────────────────────────────────

@@ -29,7 +29,8 @@ a confident, stale fact, and the human pays for it.
 
 This repo is the engine we run against our own store to keep that from happening, with our store taken out and a
 fictional one put in its place. It comes from the same pair as
-[`instruments`](https://github.com/missing-piece-lab/instruments) and uses its claims runner and cold judges.
+[`instruments`](https://github.com/missing-piece-lab/instruments): it carries a `CLAIMS.yml` for its claims runner, and
+its review lane is a one-judge cousin of its cold judges.
 
 ## The pieces
 
@@ -38,7 +39,7 @@ fictional one put in its place. It comes from the same pair as
 | [`engine/store.py`](engine/store.py) + [`lint.py`](engine/lint.py) | a memory = a markdown file with frontmatter; `MEMORY.md` = one pointer per memory | files are canonical, the database is derived and rebuildable; the index carries no state stamps — state comes from probes |
 | [`ingest.py`](engine/ingest.py) → [`graph_pg.py`](engine/graph_pg.py) / [`graph_mem.py`](engine/graph_mem.py) | files → Postgres + pgvector (or an in-process graph for tests and a first try) | an edited memory loses its embedding; a deleted file is archived, never deleted; `supersedes:` closes a validity window |
 | [`recall.py`](engine/recall.py) + [`hook.py`](engine/hook.py) | hybrid recall (keyword + vector, reciprocal rank fusion, one hop of links) over a token-gated HTTP API; a session hook that recalls N memories for a prompt | rank fusion and nothing cleverer; a flagged memory arrives with its verdict beside it; the hook shows slugs and descriptions, never bodies |
-| [`verify.py`](engine/verify.py) | nightly: every reference a memory asserts, checked in its evidence scope; a model judge on what is missing or changed | uncheckable ≠ missing ≠ unverifiable ≠ drift; blob anchors catch a file edited under a memory; a moved reference is re-anchored to where the file now is and reported as `moved` under its own heading — drift-lite: not judged, not counted as ok; a random `ok` memory is re-read each night; report-only, never edits a memory |
+| [`verify.py`](engine/verify.py) | nightly: every reference a memory asserts, checked in its own evidence scope; a model judge on what is missing or changed | uncheckable ≠ missing ≠ unverifiable ≠ drift; blob anchors catch a file edited under a memory; a moved reference is re-anchored to where the file now is and reported as `moved` under its own heading — drift-lite: not judged, not counted as ok; a hit in another scope is `elsewhere`, a hint and never evidence; a random `ok` memory is re-read each night; report-only, never edits a memory |
 | [`gardener.py`](engine/gardener.py) | a flagged memory → one branch with the minimal dated correction, never a deletion | frontmatter byte-identical, ≤40% of the body, else a dated note; a rejected branch parks the memory for 30 days |
 | [`review.py`](engine/review.py) | a deterministic guard, then a cold model read, then merge or hold | the guard is code, not a prompt: identity, the index, frontmatter, the human's name and big edits are always a human's |
 
@@ -79,7 +80,8 @@ same commands judge, draft and review for real.
 Production is Postgres + pgvector and a real embedder: `cp .env.example .env`, `docker compose up -d`, then the same
 commands — every CLI reads `.env` from the current directory first (a shell export still wins), and `ingest` checks the
 embedder's vector length against `EMBED_DIM` before it touches the graph; the compose file also runs the recall API on
-loopback. `engine/hook.py` is the session
+loopback, with its own embedder address (`EMBED_URL_CONTAINER`, the `local-embed` profile's ollama by default — inside
+the container, 127.0.0.1 is the container). `engine/hook.py` is the session
 hook: JSON in, JSON out, fail-silent; point your harness's prompt-submit and session-start hooks at it with
 `RECALL_URL` and `RECALL_TOKEN` in its environment. [docs/DESIGN.md](docs/DESIGN.md) has the decisions and their
 dates; [docs/FRONTMATTER.md](docs/FRONTMATTER.md) is the file spec.

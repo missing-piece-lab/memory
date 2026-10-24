@@ -8,13 +8,15 @@ Evidence = `--evidence DIR` holding one tree per scope (`DIR/<project>/` = the r
 `metadata.project` names), or `--scope name=path` repeated. Two tiers:
 
 Tier 1, deterministic. Every reference the body asserts (engine.store.extract_refs) is classified and checked in the
-memory's own scope first: a path exists (`ok`) · its basename exists elsewhere (`moved`) · it is gone (`missing`); a
-dotted symbol greps on a word boundary across code files (`ok`/`missing`); flags, URLs, templates, absolute paths, data
-files are `uncheckable`. An `ok` reference is pinned to the git blob of the file it resolved to; a different blob next
-night is `changed`. A `missing` reference whose scope is not mounted here is `unverifiable` — an evidence gap, never
-drift. A moved reference is re-anchored to where the file now is and reported as `moved` under its own heading — drift-
-lite: not judged, not counted as ok; the memory needs its path fixed. Per memory: any missing → drift; else any changed →
-changed; else any moved → moved; else any ok → ok; else uncheckable_only.
+memory's OWN scope: a path exists (`ok`) · its basename exists in that scope (`moved`) · it is gone (`missing`); a
+dotted symbol greps on a word boundary across that scope's code files (`ok`/`missing`); flags, URLs, templates, absolute
+paths, data files are `uncheckable`. A hit in any OTHER mounted scope is `elsewhere`: a hint for the human, never
+evidence (2026-10-24 — common names like README.md made false oks). An `ok` reference is pinned to the git blob of the
+file it resolved to; a different blob next night is `changed`. A `missing` reference whose scope is not mounted here is
+`unverifiable` — an evidence gap, never drift. A moved reference is re-anchored to where the file now is and reported as
+`moved` under its own heading — drift-lite: not judged, not counted as ok; the memory needs its path fixed; `elsewhere`
+is reported the same way and never anchored. Per memory: any missing → drift; else any changed → changed; else any
+moved → moved; else any elsewhere → elsewhere; else any ok → ok; else uncheckable_only.
 
 Tier 2, a model judge, optional (MODEL_* env; skipped cleanly without). It reads drift and changed memories only, plus a
 few random `ok` ones each night (a memory wrong from birth whose files never change is otherwise never re-read), with
@@ -149,27 +151,34 @@ def check_ref(ref, project, scopes, store):
     kind, payload = classify(ref)
     if kind not in ("path", "symbol"):
         return {"ref": ref, "kind": kind, "status": "uncheckable", "found_in": None}
-    names = order(project, scopes)
+    own = scopes.get(project)
+    others = [scopes[n] for n in scopes if n != project]
     if kind == "path":
         base = os.path.basename(payload)
         if base.endswith(".md") and "/" not in payload and os.path.isfile(os.path.join(store, base)):
             return {"ref": ref, "kind": "memory_ref", "status": "ok", "found_in": f"store/{base}"}
         head, _, tail = payload.partition("/")
-        if head in scopes and tail and scopes[head].exists(tail):
+        if head in scopes and tail and scopes[head].exists(tail):                 # a reference that names its scope
             return {"ref": ref, "kind": kind, "status": "ok", "found_in": f"{head}/{tail}"}
-        for n in names:
-            if scopes[n].exists(payload):
-                return {"ref": ref, "kind": kind, "status": "ok", "found_in": f"{n}/{payload}"}
-        for n in names:
-            hits = scopes[n].basenames.get(base)
-            if hits:
-                return {"ref": ref, "kind": kind, "status": "moved", "found_in": f"{n}/{sorted(hits)[0]}"}
+        if own and own.exists(payload):
+            return {"ref": ref, "kind": kind, "status": "ok", "found_in": f"{own.name}/{payload}"}
+        if own and own.basenames.get(base):
+            return {"ref": ref, "kind": kind, "status": "moved", "found_in": f"{own.name}/{sorted(own.basenames[base])[0]}"}
+        for s in others:                                                          # another tree is a hint, never evidence
+            if s.exists(payload):
+                return {"ref": ref, "kind": kind, "status": "elsewhere", "found_in": f"{s.name}/{payload}"}
+        for s in others:
+            if s.basenames.get(base):
+                return {"ref": ref, "kind": kind, "status": "elsewhere", "found_in": f"{s.name}/{sorted(s.basenames[base])[0]}"}
         return {"ref": ref, "kind": kind, "status": "missing", "found_in": None}
     ident = payload.split(".")[-1]
-    for n in names:
-        hit = scopes[n].grep_symbol(ident)
+    hit = own.grep_symbol(ident) if own else None
+    if hit:
+        return {"ref": ref, "kind": kind, "status": "ok", "found_in": f"{own.name}/{hit}"}
+    for s in others:
+        hit = s.grep_symbol(ident)
         if hit:
-            return {"ref": ref, "kind": kind, "status": "ok", "found_in": f"{n}/{hit}"}
+            return {"ref": ref, "kind": kind, "status": "elsewhere", "found_in": f"{s.name}/{hit}"}
     return {"ref": ref, "kind": kind, "status": "missing", "found_in": None}
 
 
@@ -177,7 +186,7 @@ def apply_accepted(slug, details, accepted):
     rules = accepted.get(slug) or {}
     n = 0
     for d in details:
-        reason = (rules.get(d["ref"]) or rules.get("*")) if d["status"] == "missing" else (rules.get(d["ref"]) if d["status"] == "moved" else None)
+        reason = (rules.get(d["ref"]) or rules.get("*")) if d["status"] == "missing" else (rules.get(d["ref"]) if d["status"] in ("moved", "elsewhere") else None)
         if reason:
             d["status"], d["found_in"] = "accepted", f"accepted: {reason}"; n += 1
     return n
@@ -219,7 +228,7 @@ def anchor(graph, slug, updated_at, details, scopes):
 def rollup(details):
     st = {d["status"] for d in details}
     return ("drift" if "missing" in st else "changed" if "changed" in st else "moved" if "moved" in st
-            else "ok" if "ok" in st else "uncheckable_only")
+            else "elsewhere" if "elsewhere" in st else "ok" if "ok" in st else "uncheckable_only")
 
 
 def evidence_text(f, scopes):
@@ -284,7 +293,7 @@ def judge(graph, findings, scopes, complete, cap):
 def report(ts, scopes, counts, findings, judged):
     L = [f"# Verifier report — {ts}", "", f"- scopes: {', '.join(sorted(scopes)) or 'none'}",
          f"- memories checked: {counts['nodes']} (ok {counts['ok']}, drift {counts['drift']}, changed {counts['changed']}, moved {counts['moved']}, "
-         f"uncheckable-only {counts['unch']})",
+         f"elsewhere {counts['elsewhere']}, uncheckable-only {counts['unch']})",
          f"- references: {counts['refs']} · accepted {counts['accepted']} · unverifiable {counts['unverifiable']} · judged {counts['judged']}"
          + ("" if judged else " (no model configured — Tier 2 skipped)"), ""]
     for title, pick in (("Drift", lambda f: f["result"] == "drift"), ("Changed", lambda f: f["result"] == "changed"),
@@ -298,6 +307,7 @@ def report(ts, scopes, counts, findings, judged):
         if not rows:
             L += ["_none_", ""]
     for title, st in (("Moved (drift-lite: re-anchored where the file now is, not judged, not ok — fix the path in the memory)", "moved"),
+                      ("Elsewhere (the path exists only in another scope: a hint, not evidence — fix the memory's scope or its path)", "elsewhere"),
                       ("Unverifiable (evidence gap: mount the scope, push the work, or accept)", "unverifiable"), ("Accepted", "accepted")):
         rows = [(f["slug"], d) for f in findings for d in f["details"] if d["status"] == st]
         if rows:
@@ -310,7 +320,7 @@ def run(store, graph, scopes, out=None, accepted=None, complete=None, judge_max=
         raise SystemExit("verify: nothing ingested yet: run ingest first (python -m engine.ingest --store DIR)")
     ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     run_id = graph.start_run("report")
-    counts = dict(nodes=0, refs=0, ok=0, drift=0, changed=0, moved=0, unch=0, accepted=0, unverifiable=0, judged=0)
+    counts = dict(nodes=0, refs=0, ok=0, drift=0, changed=0, moved=0, elsewhere=0, unch=0, accepted=0, unverifiable=0, judged=0)
     findings = []
     for n in graph.active_with_refs():
         details = [check_ref(r, n["project"], scopes, store) for r in n["refs"]]
@@ -319,7 +329,7 @@ def run(store, graph, scopes, out=None, accepted=None, complete=None, judge_max=
         anchor(graph, n["slug"], n["updated_at"], details, scopes)
         result = rollup(details)
         counts["nodes"] += 1; counts["refs"] += len(details)
-        counts[{"ok": "ok", "drift": "drift", "changed": "changed", "moved": "moved", "uncheckable_only": "unch"}[result]] += 1
+        counts[{"ok": "ok", "drift": "drift", "changed": "changed", "moved": "moved", "elsewhere": "elsewhere", "uncheckable_only": "unch"}[result]] += 1
         fid = graph.add_finding(run_id, n["slug"], result, details)
         findings.append({**n, "finding_id": fid, "result": result, "details": details, "verdict": None, "reason": None})
     judged = bool(complete)
@@ -365,7 +375,7 @@ def main(argv=None):
     finally:
         g.close()
     print(f"verify: {counts['nodes']} memories, {counts['refs']} refs — ok {counts['ok']}, drift {counts['drift']}, changed {counts['changed']}, moved {counts['moved']}, "
-          f"uncheckable-only {counts['unch']}, unverifiable {counts['unverifiable']}, judged {counts['judged']} → {path}")
+          f"elsewhere {counts['elsewhere']}, uncheckable-only {counts['unch']}, unverifiable {counts['unverifiable']}, judged {counts['judged']} → {path}")
     return 0
 
 

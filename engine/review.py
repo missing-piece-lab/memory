@@ -67,6 +67,21 @@ def new_file_frontmatter(diff):
     return fm
 
 
+def lines_changed(diff):
+    """Changed lines counted the way the Gardener's `sane()` counts them: a run of `-` then `+` lines is one change block,
+    worth max(removed, added), so a replaced line counts once, not twice (2026-10-24: counting both sides, the lane held
+    every draft the Gardener had accepted above about 20%)."""
+    n = minus = plus = 0
+    for l in diff.splitlines() + [" "]:
+        if l.startswith("-") and not l.startswith("---"):
+            minus += 1
+        elif l.startswith("+") and not l.startswith("+++"):
+            plus += 1
+        else:
+            n += max(minus, plus); minus = plus = 0
+    return n
+
+
 def guard(files, diff, repo, base, human=None, identity_scope="identity"):
     """None when the change is fact-class; else the reason to hold it for the human."""
     if len(files) != 1:
@@ -92,8 +107,9 @@ def guard(files, diff, repo, base, human=None, identity_scope="identity"):
         return "changes frontmatter"
     if human_re and any(human_re.search(l) for l in changed):
         return f"changes a line that mentions {human}"
-    if len(changed) / body_lines > MAX_CHANGE:
-        return f"changes {len(changed)} lines of a {body_lines}-line body (> {int(MAX_CHANGE * 100)}%)"
+    n = lines_changed(diff)
+    if n / body_lines > MAX_CHANGE:
+        return f"changes {n} lines of a {body_lines}-line body (> {int(MAX_CHANGE * 100)}%)"
     return None
 
 
