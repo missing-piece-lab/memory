@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300" role="img" aria-label="By day: files to graph to recall. By night: verify, gardener, review, back to the files.">
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}.m{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8250df"/></marker></defs>
+<text x="40" y="34" font-size="12" font-weight="600" fill="#1f2328" letter-spacing="1">BY DAY</text>
+<text x="40" y="282" font-size="12" font-weight="600" fill="#1f2328" letter-spacing="1">BY NIGHT</text>
+<rect x="40" y="50" width="240" height="56" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="56" y="74" class="m" font-size="14" font-weight="600" fill="#8250df">files</text>
+<text x="56" y="93" font-size="12.5" fill="#59636e">markdown + frontmatter</text>
+<rect x="320" y="50" width="240" height="56" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="336" y="74" class="m" font-size="14" font-weight="600" fill="#8250df">graph</text>
+<text x="336" y="93" font-size="12.5" fill="#59636e">Postgres + pgvector</text>
+<rect x="600" y="50" width="240" height="56" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="616" y="74" class="m" font-size="14" font-weight="600" fill="#8250df">recall</text>
+<text x="616" y="93" font-size="12.5" fill="#59636e">keyword + vector, one hop</text>
+<rect x="600" y="194" width="240" height="56" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="616" y="218" class="m" font-size="14" font-weight="600" fill="#8250df">verify</text>
+<text x="616" y="237" font-size="12.5" fill="#59636e">every reference, checked</text>
+<rect x="320" y="194" width="240" height="56" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="336" y="218" class="m" font-size="14" font-weight="600" fill="#8250df">gardener</text>
+<text x="336" y="237" font-size="12.5" fill="#59636e">a dated fix, never a delete</text>
+<rect x="40" y="194" width="240" height="56" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="56" y="218" class="m" font-size="14" font-weight="600" fill="#8250df">review</text>
+<text x="56" y="237" font-size="12.5" fill="#59636e">a code guard, then a cold read</text>
+<line x1="282" y1="78" x2="318" y2="78" stroke="#8250df" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="318" y1="222" x2="282" y2="222" stroke="#8250df" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="562" y1="78" x2="598" y2="78" stroke="#8250df" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="598" y1="222" x2="562" y2="222" stroke="#8250df" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M720 106 L720 192" stroke="#8250df" stroke-width="1.6" fill="none" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<path d="M160 194 L160 108" stroke="#8250df" stroke-width="1.6" fill="none" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<text x="732" y="154" font-size="12" fill="#59636e">what recall served</text>
+<text x="172" y="154" font-size="12" fill="#59636e">merged, or held for the human</text>
+</svg>

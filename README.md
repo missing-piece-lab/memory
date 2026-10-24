@@ -1,15 +1,37 @@
-# The missing piece — a verified memory
+<div align="center">
 
-*2026-10-24 · the engine without the store: files, a graph, recall, a nightly Verifier, a Gardener, a review lane · MIT*
+# The missing piece · memory
+
+**A verified memory for a long-running agent. The engine, without the store.**
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-8250df.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776ab.svg)](pyproject.toml)
+[![Postgres + pgvector](https://img.shields.io/badge/store-Postgres%20%2B%20pgvector-336791.svg)](compose.yaml)
+[![Tests: offline](https://img.shields.io/badge/tests-offline-2da44e.svg)](tests/run.py)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/hero-dark.svg">
+  <img alt="By day: files to graph to recall. By night: verify, gardener, review, back to the files." src="docs/hero-light.svg" width="880">
+</picture>
+
+[The pieces](#the-pieces) · [Install and run](#install-and-run) · [What a review said](#what-a-review-said) · [What this is not](#what-this-is-not) · [Instruments →](https://github.com/missing-piece-lab/instruments)
+
+</div>
+
+---
 
 A long-running agent remembers in files: one markdown file per durable fact, with frontmatter, and an index of one-line
-pointers it loads at the start of every session. That part is easy and everyone has it. The part almost nobody has is
-what happens to those files on night forty: the path a memory names has moved, the flag it describes was removed, the
-"rule" it states was reversed in a conversation nobody wrote down. Recall then serves a confident, stale fact, and the
-human pays for it. This repo is the engine we run against our own store to keep that from happening, with our store
-taken out and a fictional one put in its place. It is the second repo from the same pair as
-[`instruments`](https://github.com/missing-piece-lab/instruments); state-is-observed, the claims runner and the cold
-judges live there and are used here by reference.
+pointers it loads at the start of every session. That part is easy, and everyone has it.
+
+The part almost nobody has is what happens to those files on **night forty**. The path a memory names has moved, the
+flag it describes was removed, the "rule" it states was reversed in a conversation nobody wrote down. Recall then serves
+a confident, stale fact, and the human pays for it.
+
+This repo is the engine we run against our own store to keep that from happening, with our store taken out and a
+fictional one put in its place. It comes from the same pair as
+[`instruments`](https://github.com/missing-piece-lab/instruments) and uses its claims runner and cold judges.
+
+## The pieces
 
 | piece | one line | the design decision at its heart |
 |---|---|---|
@@ -25,23 +47,25 @@ judges live there and are used here by reference.
 Python 3.11+, one dependency (`pyyaml`); `psycopg[binary]` for the Postgres graph. Everything below runs offline with
 the in-process graph and the fake embedder; the tests never touch Postgres or a model.
 
-```
-git clone <this repo> && cd missing-piece-memory
+```bash
+git clone https://github.com/missing-piece-lab/memory && cd memory
 pip install pyyaml
-python tests/run.py        # every test, offline, then tools/check.sh: the scrub gate (secret-shaped strings and the size
-                           #   cap always; your own private-words list only when one is present — its summary line says which)
-bash tools/demo.sh         # the whole loop, offline, in a temp dir: lint → ingest → recall → verify (twice, with a scripted
-                           #   judge) → the Gardener's branch → the review lane's merge. Read it; it is the first hour.
+
+python tests/run.py    # every test, offline, then the scrub gate
+bash tools/demo.sh     # the whole loop, offline, in a temp dir
 ```
 
+`tools/demo.sh` runs lint → ingest → recall → verify (twice, with a scripted judge) → the Gardener's branch → the review
+lane's merge. Read it; it is the first hour. The scrub gate (`tools/check.sh`) always checks for secret-shaped strings and
+the size cap, and checks your own private-words list when one is present; its summary line says which.
 The example store is ten memories about a fictional bakery's inventory tool. Seven of them carry references into the
 evidence tree and the Verifier checks those seven; one names a file that is not there and comes back as drift. The demo
 uses `EMBED_KIND=fake` and `MODEL_KIND=fake` — a hashed bag-of-words embedder and a scripted judge that calls every
 missing reference STALE — so nothing is called and nothing is learned about quality; the point is to see each piece
 hand to the next. The same commands, one at a time:
 
-```
-python -m engine.lint   --store example/store                                 # the index rule and the frontmatter spec
+```bash
+python -m engine.lint   --store example/store
 python -m engine.ingest --store example/store --graph graph.json
 python -m engine.recall "when do we reorder flour" --graph graph.json
 python -m engine.verify --store example/store --evidence example/evidence --graph graph.json --no-judge
@@ -78,7 +102,7 @@ specific to our own machines, forge, chat line and budget was cut, and the desig
 
 ## Who
 
-Kevin, the human. Ariah, the AI collaborator.
+**Kevin**, the human, and **Ariah**, the AI collaborator. One pair, keeping the record.
 
 ## License
 
