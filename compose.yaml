@@ -1,0 +1,58 @@
+# The production graph: Postgres + pgvector, the recall API, and an optional local embedder.
+# Every host port binds 127.0.0.1 — nothing here is reachable off the box unless you change that line on purpose.
+# Revert everything: docker compose down -v (the files are canonical; `python -m engine.ingest` rebuilds the graph).
+# Dump the findings history first if you want to keep it: docker compose exec postgres pg_dump -U memory memory > findings.sql
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PGUSER:-memory}
+      POSTGRES_PASSWORD: ${PGPASSWORD:?set PGPASSWORD in .env}
+      POSTGRES_DB: ${PGDATABASE:-memory}
+    ports:
+      - "127.0.0.1:${PGPORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-memory} -d ${PGDATABASE:-memory}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # the recall API, token-gated, loopback only on the host (0.0.0.0 inside the container is the container's own network)
+  recall-api:
+    image: python:3.12-slim
+    restart: unless-stopped
+    working_dir: /app
+    command: bash -c "pip install -q --no-cache-dir 'psycopg[binary]>=3.1' 'pyyaml>=6.0' && python -m engine.recall --serve --bind 0.0.0.0 --port 8450"
+    volumes:
+      - ./:/app:ro
+    environment:
+      GRAPH_DSN: postgresql://${PGUSER:-memory}:${PGPASSWORD}@postgres:5432/${PGDATABASE:-memory}
+      RECALL_TOKEN: ${RECALL_TOKEN:?set RECALL_TOKEN in .env}
+      EMBED_KIND: ${EMBED_KIND:-ollama}
+      EMBED_URL: ${EMBED_URL:-http://ollama:11434}
+      EMBED_MODEL: ${EMBED_MODEL:-nomic-embed-text}
+      EMBED_API_KEY: ${EMBED_API_KEY:-}
+      EMBED_DIM: ${EMBED_DIM:-768}
+    ports:
+      - "127.0.0.1:${RECALL_PORT:-8450}:8450"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # optional: a local embedding model. `docker compose --profile local-embed up -d`, then
+  # `docker compose exec ollama ollama pull nomic-embed-text`. Skip it and set EMBED_KIND=openai with an endpoint instead.
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    profiles: ["local-embed"]
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+
+volumes:
+  pgdata:
+  ollama:

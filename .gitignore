@@ -1,0 +1,12 @@
+__pycache__/
+.pytest_cache/
+*.lock
+*.tmp
+.env
+graph.json
+out/
+reports/
+proposals/
+reviews/
+private-words
+state/

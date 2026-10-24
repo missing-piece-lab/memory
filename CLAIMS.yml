@@ -1,0 +1,32 @@
+# This repo's own claims, probed by the `claims` instrument (github.com/missing-piece-lab/instruments):
+#   python ../instruments/instruments/claims/claims.py --root . --docs docs
+# State is observed: nothing in README or docs asserts what one of these can check. No probe runs the test suite.
+project: missing-piece-memory
+claims:
+  - id: engine-modules
+    says: the engine is thirteen modules, each with a docstring that is its own README
+    probe: test "$(ls engine/*.py | grep -v __init__ | wc -l)" -eq 13 && for f in $(ls engine/*.py | grep -v __init__); do head -c 3 "$f" | grep -q '"""\|#!/' || exit 1; done
+  - id: example-store-lints-clean
+    says: the example store passes the index rule and the frontmatter spec
+    probe: python3 -m engine.lint --store example/store >/dev/null
+    subject: [example, lint]
+    contradicts: {false: [clean]}
+  - id: example-drifts-on-purpose
+    says: the Verifier finds exactly one drifting memory in the example store
+    probe: rm -f /tmp/claims-probe-graph.json && EMBED_KIND=fake python3 -m engine.ingest --store example/store --graph /tmp/claims-probe-graph.json --no-embed >/dev/null && python3 -m engine.verify --store example/store --evidence example/evidence --graph /tmp/claims-probe-graph.json --out /tmp/claims-probe-reports --no-judge | grep -q "drift 1,"
+    subject: [example, drift]
+  - id: scrub-gate-clean
+    says: the scrub gate finds nothing private and nothing secret-shaped
+    probe: bash tools/check.sh >/dev/null
+    subject: [scrub, private]
+    contradicts: {false: [clean, scrubbed]}
+  - id: line-count
+    says: lines in the repo (the budget is 4,000)
+    probe: find . -path ./.git -prune -o -type f \( -name '*.py' -o -name '*.md' -o -name '*.yml' -o -name '*.yaml' -o -name '*.sh' -o -name '*.toml' -o -name '*.sql' -o -name '*.example' -o -name 'LICENSE' \) -print0 | xargs -0 cat | wc -l
+    kind: count
+  - id: mit
+    says: the license is MIT
+    probe: head -1 LICENSE | grep -q "MIT License"
+  - id: one-required-dependency
+    says: the only required dependency is pyyaml
+    probe: python3 -c "import tomllib,sys; d=tomllib.load(open('pyproject.toml','rb'))['project']['dependencies']; sys.exit(0 if len(d)==1 and d[0].startswith('pyyaml') else 1)"

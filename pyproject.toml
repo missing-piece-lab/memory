@@ -1,0 +1,16 @@
+[project]
+name = "missing-piece-memory"
+version = "0.1.0"
+description = "A verified memory for a long-running agent: markdown files, a pgvector graph, hybrid recall, a nightly Verifier, a Gardener that proposes dated corrections, and a review lane."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "the missing-piece-lab authors" }]
+dependencies = ["pyyaml>=6.0"]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

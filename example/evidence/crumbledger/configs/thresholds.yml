@@ -1,0 +1,5 @@
+# grams on hand below which an item goes on the morning reorder list (overrides the computed point)
+flour_bread:  25000
+flour_pastry: 10000
+butter:        8000
+yeast_fresh:    500
