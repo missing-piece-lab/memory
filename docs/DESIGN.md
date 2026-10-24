@@ -47,6 +47,11 @@ dates are real.*
 - **A verdict travels with the memory** (2026-09-06). A flagged memory is still recalled — it may still be the best
   answer — but it arrives with the judge's verdict, votes and reason so the session reads the doubt.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="recall-dark.svg">
+  <img alt="Recall: a keyword leg and a vector leg, top 50 each, fused by reciprocal rank fusion with k=60; the memory first on both legs scores 1/61 + 1/61 = 0.0328, one second on one leg 1/62 = 0.0161; then one hop of links." src="recall-light.svg" width="880">
+</picture>
+
 ## The Verifier
 
 - **Uncheckable is not missing** (2026-07-05, the first sweep). Twenty drift findings, half of them the checker's own

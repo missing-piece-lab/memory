@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="400" viewBox="0 0 1100 400" role="img" aria-label="The Verifier: tier 1 checks every reference with no model and pins ok references to a blob hash; moved references are re-anchored and reported, not judged; missing or changed references go to a model judge, and only a 2-of-3 STALE or CONTRADICTED verdict sends the memory to the Gardener's branch, whose merge makes it ok again.">
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}.m{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a371f7"/></marker><marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#3fb950"/></marker><marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#f85149"/></marker></defs>
+<rect x="20" y="60" width="280" height="104" rx="10" fill="#161b22" stroke="#3d444d"/>
+<text x="34" y="82" class="m" font-size="13.5" font-weight="600" fill="#a371f7">a memory</text>
+<text x="34" y="100" class="m" font-size="11.5" fill="#9198a1">flour-reorder-point.md</text>
+<text x="34" y="116" class="m" font-size="11.5" fill="#9198a1">refs: src/reorder.py · REORDER_POINT</text>
+<text x="34" y="132" class="m" font-size="11.5" fill="#9198a1">project: crumbledger</text>
+<text x="34" y="148" font-size="12" fill="#9198a1">checked only in that clone</text>
+<rect x="322" y="40" width="278" height="144" rx="10" fill="#161b22" stroke="#3d444d"/>
+<text x="336" y="62" class="m" font-size="13.5" font-weight="600" fill="#a371f7">tier 1 · no model</text>
+<text x="336" y="80" font-size="12" fill="#9198a1">a path → exists · moved · missing</text>
+<text x="336" y="96" font-size="12" fill="#9198a1">a symbol → a word-boundary grep</text>
+<text x="336" y="112" font-size="12" fill="#9198a1">a flag, a URL, a figure → uncheckable</text>
+<text x="336" y="128" font-size="12" fill="#9198a1">ok refs pinned to a git blob hash:</text>
+<text x="336" y="144" font-size="12" fill="#9198a1">same blob = ok · new blob = changed</text>
+<text x="336" y="160" font-size="12" fill="#9198a1">+ one random ok memory re-read a night</text>
+<rect x="640" y="40" width="225" height="44" rx="10" fill="#12261e" stroke="#3fb950"/>
+<text x="654" y="62" font-size="13.5" font-weight="600" fill="#3fb950">ok</text>
+<text x="654" y="73" font-size="11.5" fill="#9198a1" text-anchor="start">pinned; report, no judge</text>
+<rect x="640" y="98" width="225" height="44" rx="10" fill="#2a2111" stroke="#d29922"/>
+<text x="654" y="120" font-size="13.5" font-weight="600" fill="#d29922">moved</text>
+<text x="654" y="131" font-size="11.5" fill="#9198a1" text-anchor="start">re-anchored; reported, not judged</text>
+<rect x="640" y="156" width="225" height="44" rx="10" fill="#2d1416" stroke="#f85149"/>
+<text x="654" y="178" font-size="13.5" font-weight="600" fill="#f85149">drift</text>
+<text x="654" y="189" font-size="11.5" fill="#9198a1" text-anchor="start">missing or changed</text>
+<rect x="640" y="236" width="290" height="104" rx="10" fill="#161b22" stroke="#3d444d"/>
+<text x="654" y="258" class="m" font-size="13.5" font-weight="600" fill="#a371f7">tier 2 · a model judge</text>
+<text x="654" y="276" font-size="12" fill="#9198a1">reads the memory and the evidence,</text>
+<text x="654" y="292" font-size="12" fill="#9198a1">capped per night</text>
+<text x="654" y="308" font-size="12" fill="#9198a1">CONFIRMED · UNCLEAR · STALE · CONTRADICTED</text>
+<text x="654" y="324" font-size="12" fill="#9198a1">a flag only on 2 of 3 STALE / CONTRADICTED</text>
+<rect x="970" y="258" width="110" height="60" rx="10" fill="#2d1416" stroke="#f85149"/>
+<text x="984" y="280" class="m" font-size="13.5" font-weight="600" fill="#f85149">gardener.py</text>
+<text x="984" y="298" font-size="12" fill="#9198a1">one branch</text>
+<path d="M302 112 L320 112" fill="none" stroke="#a371f7" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M602 62 L638 62" fill="none" stroke="#3fb950" stroke-width="1.6" marker-end="url(#g)"/>
+<path d="M602 112 L638 120" fill="none" stroke="#a371f7" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M602 160 L638 178" fill="none" stroke="#f85149" stroke-width="1.6" marker-end="url(#r)"/>
+<path d="M740 202 L740 234" fill="none" stroke="#f85149" stroke-width="1.6" marker-end="url(#r)"/>
+<path d="M932 288 L968 288" fill="none" stroke="#f85149" stroke-width="1.6" marker-end="url(#r)"/>
+<text x="950" y="280" font-size="11" fill="#f85149" text-anchor="middle">2 of 3</text>
+<path d="M1025 320 L1025 364 L145 364 L145 166" fill="none" stroke="#3fb950" stroke-width="1.6" marker-end="url(#g)"/>
+<text x="585" y="380" font-size="11" fill="#3fb950" text-anchor="middle">the branch merges → the file changes → next night it is ok again</text>
+<text x="20" y="30" font-size="11.5" fill="#9198a1" text-anchor="start">report-only: the Verifier never edits a memory. Uncheckable is not missing; elsewhere is a hint, never evidence.</text>
+</svg>

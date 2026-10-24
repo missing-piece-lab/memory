@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="330" viewBox="0 0 1000 330" role="img" aria-label="Recall: a keyword leg and a vector leg, top 50 each, fused by reciprocal rank fusion with k=60; the memory first on both legs scores 1/61 + 1/61 = 0.0328, one second on one leg 1/62 = 0.0161; then one hop of links.">
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}.m{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a371f7"/></marker><marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#3fb950"/></marker><marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#f85149"/></marker></defs>
+<text x="20" y="30" font-size="12" fill="#9198a1" text-anchor="start">the prompt: when do we reorder flour?   (private rows are filtered before either leg)</text>
+<text x="20" y="66" font-size="11.5" fill="#9198a1" text-anchor="start">vector leg · embedding ⟷ query · top 50</text>
+<rect x="20" y="78" width="250" height="28" rx="8" fill="#161b22" stroke="#3d444d"/>
+<text x="34" y="97" class="m" font-size="12" fill="#e6edf3">1 · flour-reorder-point</text>
+<rect x="20" y="114" width="250" height="28" rx="8" fill="#161b22" stroke="#3d444d"/>
+<text x="34" y="133" class="m" font-size="12" fill="#e6edf3">2 · count-before-ordering</text>
+<rect x="20" y="150" width="250" height="28" rx="8" fill="#161b22" stroke="#3d444d"/>
+<text x="34" y="169" class="m" font-size="12" fill="#e6edf3">3 · holiday-multiplier</text>
+<text x="20" y="214" font-size="11.5" fill="#9198a1" text-anchor="start">keyword leg · full-text search · top 50</text>
+<rect x="20" y="226" width="250" height="28" rx="8" fill="#161b22" stroke="#3d444d"/>
+<text x="34" y="245" class="m" font-size="12" fill="#e6edf3">1 · flour-reorder-point</text>
+<text x="20" y="272" font-size="11" fill="#9198a1" text-anchor="start">the only row matching flour + reorder</text>
+<text x="400" y="66" font-size="11.5" fill="#9198a1" text-anchor="start">fused · Σ 1 / (60 + rank)</text>
+<rect x="400" y="78" width="300" height="48" rx="8" fill="#161b22" stroke="#a371f7" stroke-width="1.5"/>
+<text x="414" y="97" class="m" font-size="12" fill="#e6edf3">flour-reorder-point</text>
+<text x="414" y="116" class="m" font-size="11.5" fill="#a371f7">1/61 + 1/61 = 0.0328</text>
+<rect x="400" y="140" width="300" height="48" rx="8" fill="#161b22" stroke="#3d444d"/>
+<text x="414" y="159" class="m" font-size="12" fill="#e6edf3">count-before-ordering</text>
+<text x="414" y="178" class="m" font-size="11.5" fill="#9198a1">1/62 = 0.0161</text>
+<rect x="400" y="202" width="300" height="48" rx="8" fill="#161b22" stroke="#3d444d"/>
+<text x="414" y="221" class="m" font-size="12" fill="#e6edf3">holiday-multiplier</text>
+<text x="414" y="240" class="m" font-size="11.5" fill="#9198a1">1/63 = 0.0159</text>
+<path d="M272 92 C 340 92, 340 102, 398 102" fill="none" stroke="#a371f7" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M272 128 C 340 128, 340 164, 398 164" fill="none" stroke="#a371f7" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<path d="M272 164 C 340 164, 340 226, 398 226" fill="none" stroke="#a371f7" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<path d="M272 240 C 340 240, 340 110, 398 110" fill="none" stroke="#a371f7" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="730" y="90" font-size="11.5" fill="#9198a1" text-anchor="start">then one hop: each result's own</text>
+<text x="730" y="106" font-size="11.5" fill="#9198a1" text-anchor="start">[[links]] come along, nothing further</text>
+<text x="730" y="140" font-size="11.5" fill="#9198a1" text-anchor="start">beside score, sim: the cosine from the</text>
+<text x="730" y="156" font-size="11.5" fill="#9198a1" text-anchor="start">vector leg, so the hook can abstain</text>
+<text x="730" y="190" font-size="11.5" fill="#9198a1" text-anchor="start">a flagged row still comes, with its</text>
+<text x="730" y="206" font-size="11.5" fill="#9198a1" text-anchor="start">verdict, votes and reason beside it</text>
+<text x="20" y="310" font-size="11.5" fill="#9198a1" text-anchor="start">real arithmetic, fictional store: rank 1 on both legs is 1/61 twice; rank 2 on one leg is 1/62. Nothing cleverer is in this repo.</text>
+</svg>

@@ -32,6 +32,13 @@ fictional one put in its place. It comes from the same pair as
 [`instruments`](https://github.com/missing-piece-lab/instruments): it carries a `CLAIMS.yml` for its claims runner, and
 its review lane is a one-judge cousin of its cold judges.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/map-dark.svg">
+  <img alt="Every piece, on one map: sessions write files to one store; the hub ingests them into a graph and serves recall back; the Verifier checks every reference against read-only clones, the Gardener opens a branch, the review lane merges or holds, and the merged file comes back through ingest." src="docs/map-light.svg" width="880">
+</picture>
+
+*Every piece, on one map. The example store is a bakery's; the engine does not know the difference.*
+
 ## The pieces
 
 | piece | one line | the design decision at its heart |
@@ -42,6 +49,13 @@ its review lane is a one-judge cousin of its cold judges.
 | [`verify.py`](engine/verify.py) | nightly: every reference a memory asserts, checked in its own evidence scope; a model judge on what is missing or changed | uncheckable ≠ missing ≠ unverifiable ≠ drift; blob anchors catch a file edited under a memory; a moved reference is re-anchored to where the file now is and reported as `moved` under its own heading — drift-lite: not judged, not counted as ok; a hit in another scope is `elsewhere`, a hint and never evidence; a random `ok` memory is re-read each night; report-only, never edits a memory |
 | [`gardener.py`](engine/gardener.py) | a flagged memory → one branch with the minimal dated correction, never a deletion | frontmatter byte-identical, ≤40% of the body, else a dated note; a rejected branch parks the memory for 30 days |
 | [`review.py`](engine/review.py) | a deterministic guard, then a cold model read, then merge or hold | the guard is code, not a prompt: identity, the index, frontmatter, the human's name and big edits are always a human's |
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/verify-dark.svg">
+  <img alt="The Verifier: tier 1 checks every reference with no model and pins ok references to a blob hash; moved references are re-anchored and reported, not judged; missing or changed references go to a model judge, and only a 2-of-3 STALE or CONTRADICTED verdict sends the memory to the Gardener's branch, whose merge makes it ok again." src="docs/verify-light.svg" width="880">
+</picture>
+
+*The night, for one memory. Two tiers, and the model only sees what the first tier could not settle.*
 
 ## Install and run
 
