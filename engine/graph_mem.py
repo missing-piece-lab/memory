@@ -85,6 +85,9 @@ class MemoryGraph:
         return [(s, f"{n['title']}\n{n['description']}\n{n['body']}") for s, n in self.d["nodes"].items() if n["embedding"] is None]
 
     def set_embedding(self, slug, vec):
+        from .embed import config
+        if len(vec) != config()["dim"]:
+            raise ValueError(f"refusing to write a {len(vec)}-float vector for {slug}: EMBED_DIM is {config()['dim']}")
         self.d["nodes"][slug]["embedding"] = list(vec)
 
     # ── recall ──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -126,11 +129,13 @@ class MemoryGraph:
                         "sim": round(sims[slug], 4) if slug in vec else None})
         return out
 
-    def neighbors(self, slugs):
+    def neighbors(self, slugs, exclude_types=()):
+        """One hop along [[links]]. The same type exclusion as recall: an excluded memory never surfaces as `related` either."""
         out = {}
         for e in self.d["edges"]:
             dst = self.d["nodes"].get(e["dst"])
-            if e["src"] in slugs and e["rel"] == "relates_to" and dst and dst["status"] == "active" and dst["valid_to"] is None:
+            if (e["src"] in slugs and e["rel"] == "relates_to" and dst and dst["status"] == "active" and dst["valid_to"] is None
+                    and (dst.get("type") or "") not in set(exclude_types)):
                 out.setdefault(e["src"], []).append({"slug": e["dst"], "title": dst["title"]})
         return out
 

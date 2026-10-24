@@ -61,6 +61,11 @@ def render(results, seen, min_sim, label):
 
 def main(stdin=None, c=None, recall_fn=None):
     try:
+        from .config import load_env
+        load_env()
+    except Exception:
+        pass
+    try:
         d = json.load(stdin or sys.stdin)
     except Exception:
         return 0

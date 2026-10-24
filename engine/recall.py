@@ -12,13 +12,14 @@
 
 Ranking is reciprocal rank fusion of two legs (keyword, vector), nothing more: no recency, no confidence, no weights.
 `score` is rank-based and cannot say "nothing relevant"; `sim` (cosine from the vector leg, None for a keyword-only
-hit) can — the hook uses it as a floor. An unreachable embedder degrades to the keyword leg alone, with one stderr line. `related` = one hop along [[links]]. `verdict` appears only when the Verifier has
+hit) can — the hook uses it as a floor. An unreachable embedder degrades to the keyword leg alone, with one stderr line. `related` = one hop along [[links]], under the same type exclusion as the results. `verdict` appears only when the Verifier has
 flagged the memory (2-of-3), so a session reads the doubt beside the memory instead of trusting it blind.
 """
 import argparse, json, os, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import embed as E
+from .config import load_env
 from .graph import open_graph
 
 MAX_K = 8
@@ -31,7 +32,7 @@ def recall(graph, query, k=3, exclude_types=(), source="cli", session=None, embe
         print(f"recall: embedder unreachable ({type(e).__name__}) — keyword-only for this query", file=sys.stderr)
         qvec = None
     rows = graph.recall(query, qvec, min(int(k), MAX_K), exclude_types)
-    related = graph.neighbors([r["slug"] for r in rows])
+    related = graph.neighbors([r["slug"] for r in rows], exclude_types)
     flagged = {f["slug"]: f for f in graph.flagged()}
     for r in rows:
         r["related"] = related.get(r["slug"], [])
@@ -96,6 +97,7 @@ def serve(graph, token, bind="127.0.0.1", port=8450, embed_fn=None):
 
 
 def main(argv=None):
+    load_env()
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("query", nargs="?"); ap.add_argument("-k", type=int, default=3); ap.add_argument("--graph")
     ap.add_argument("--exclude", action="append", default=[], help="a type to exclude (repeatable)")

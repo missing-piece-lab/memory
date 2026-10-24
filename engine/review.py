@@ -20,6 +20,7 @@ MERGE merges the branch into `--base` in the checkout (`--no-ff`; the checkout m
 import argparse, datetime as dt, os, re, subprocess, sys
 
 from . import llm, store as S
+from .config import load_env
 
 MAX_CHANGE = 0.40
 FRONTMATTER_LINE = re.compile(r"^[+-](---$|name:|description:|metadata:|supersedes:|\s+(type|project|origin|session|modified|box|model|harness):)")
@@ -136,6 +137,7 @@ def run(branch, repo, base="main", out="reviews", human=None, identity_scope="id
 
 
 def main(argv=None):
+    load_env()
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("branch"); ap.add_argument("--repo", required=True); ap.add_argument("--base", default="main"); ap.add_argument("--out", default="reviews")
     ap.add_argument("--human", default=os.environ.get("REVIEW_HUMAN_NAME")); ap.add_argument("--identity-scope", default=os.environ.get("IDENTITY_SCOPE", "identity"))

@@ -11,6 +11,7 @@ skips that file loudly and the rest go on.
 import argparse, sys
 
 from . import embed as E, store as S
+from .config import check_embedding_dim, load_env
 from .graph import open_graph
 
 
@@ -37,9 +38,12 @@ def ingest(store, graph, do_embed=True, embed_fn=None):
 
 
 def main(argv=None):
+    load_env()
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--store", required=True); ap.add_argument("--graph"); ap.add_argument("--no-embed", action="store_true")
     a = ap.parse_args(argv)
+    if not a.no_embed:
+        check_embedding_dim()                       # one clear line now, not a failed write later
     g = open_graph(a.graph)
     try:
         r = ingest(a.store, g, do_embed=not a.no_embed)

@@ -12,7 +12,9 @@ memory's own scope first: a path exists (`ok`) · its basename exists elsewhere 
 dotted symbol greps on a word boundary across code files (`ok`/`missing`); flags, URLs, templates, absolute paths, data
 files are `uncheckable`. An `ok` reference is pinned to the git blob of the file it resolved to; a different blob next
 night is `changed`. A `missing` reference whose scope is not mounted here is `unverifiable` — an evidence gap, never
-drift. Per memory: any missing → drift; else any changed → changed; else any checked → ok; else uncheckable_only.
+drift. A moved reference is re-anchored to where the file now is and reported as `moved` under its own heading — drift-
+lite: not judged, not counted as ok; the memory needs its path fixed. Per memory: any missing → drift; else any changed →
+changed; else any moved → moved; else any ok → ok; else uncheckable_only.
 
 Tier 2, a model judge, optional (MODEL_* env; skipped cleanly without). It reads drift and changed memories only, plus a
 few random `ok` ones each night (a memory wrong from birth whose files never change is otherwise never re-read), with
@@ -24,6 +26,7 @@ import argparse, hashlib, os, random, re, subprocess, sys
 from datetime import datetime, timezone
 
 from . import llm, store as S
+from .config import load_env
 from .graph import open_graph
 
 SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", "dist", "build"}
@@ -194,13 +197,15 @@ def anchor(graph, slug, updated_at, details, scopes):
     old = graph.anchors(slug)
     changed = 0
     for d in details:
-        if d["status"] != "ok" or d["kind"] not in ("path", "symbol"):
+        if d["status"] not in ("ok", "moved") or d["kind"] not in ("path", "symbol"):
             continue
         name, _, rel = d["found_in"].partition("/")
         sha = scopes[name].blob_sha(rel) if name in scopes else None
         if not sha:
             continue
         prev = old.get(d["ref"])
+        if d["status"] == "moved":                              # re-anchored where it now is; never compared, never `changed`
+            graph.set_anchor(slug, d["ref"], d["found_in"], sha); d["anchor"] = "moved"; continue
         if prev is None or prev[2] != d["found_in"] or (updated_at and prev[1] and updated_at > prev[1]):
             graph.set_anchor(slug, d["ref"], d["found_in"], sha); d["anchor"] = "set"
         elif prev[0] == sha:
@@ -213,7 +218,8 @@ def anchor(graph, slug, updated_at, details, scopes):
 
 def rollup(details):
     st = {d["status"] for d in details}
-    return "drift" if "missing" in st else "changed" if "changed" in st else "ok" if st & {"ok", "moved"} else "uncheckable_only"
+    return ("drift" if "missing" in st else "changed" if "changed" in st else "moved" if "moved" in st
+            else "ok" if "ok" in st else "uncheckable_only")
 
 
 def evidence_text(f, scopes):
@@ -277,7 +283,8 @@ def judge(graph, findings, scopes, complete, cap):
 
 def report(ts, scopes, counts, findings, judged):
     L = [f"# Verifier report — {ts}", "", f"- scopes: {', '.join(sorted(scopes)) or 'none'}",
-         f"- memories checked: {counts['nodes']} (ok {counts['ok']}, drift {counts['drift']}, changed {counts['changed']}, uncheckable-only {counts['unch']})",
+         f"- memories checked: {counts['nodes']} (ok {counts['ok']}, drift {counts['drift']}, changed {counts['changed']}, moved {counts['moved']}, "
+         f"uncheckable-only {counts['unch']})",
          f"- references: {counts['refs']} · accepted {counts['accepted']} · unverifiable {counts['unverifiable']} · judged {counts['judged']}"
          + ("" if judged else " (no model configured — Tier 2 skipped)"), ""]
     for title, pick in (("Drift", lambda f: f["result"] == "drift"), ("Changed", lambda f: f["result"] == "changed"),
@@ -290,7 +297,8 @@ def report(ts, scopes, counts, findings, judged):
             L += [f"| `{d['ref']}` | {d['kind']} | {d['status']} | {d.get('found_in') or ''} |" for d in f["details"]] + [""]
         if not rows:
             L += ["_none_", ""]
-    for title, st in (("Unverifiable (evidence gap: mount the scope, push the work, or accept)", "unverifiable"), ("Accepted", "accepted"), ("Moved", "moved")):
+    for title, st in (("Moved (drift-lite: re-anchored where the file now is, not judged, not ok — fix the path in the memory)", "moved"),
+                      ("Unverifiable (evidence gap: mount the scope, push the work, or accept)", "unverifiable"), ("Accepted", "accepted")):
         rows = [(f["slug"], d) for f in findings for d in f["details"] if d["status"] == st]
         if rows:
             L += [f"## {title} — {len(rows)}", ""] + [f"- `{s}`: `{d['ref']}` — {d['found_in']}" for s, d in rows] + [""]
@@ -302,7 +310,7 @@ def run(store, graph, scopes, out=None, accepted=None, complete=None, judge_max=
         raise SystemExit("verify: nothing ingested yet: run ingest first (python -m engine.ingest --store DIR)")
     ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     run_id = graph.start_run("report")
-    counts = dict(nodes=0, refs=0, ok=0, drift=0, changed=0, unch=0, accepted=0, unverifiable=0, judged=0)
+    counts = dict(nodes=0, refs=0, ok=0, drift=0, changed=0, moved=0, unch=0, accepted=0, unverifiable=0, judged=0)
     findings = []
     for n in graph.active_with_refs():
         details = [check_ref(r, n["project"], scopes, store) for r in n["refs"]]
@@ -311,7 +319,7 @@ def run(store, graph, scopes, out=None, accepted=None, complete=None, judge_max=
         anchor(graph, n["slug"], n["updated_at"], details, scopes)
         result = rollup(details)
         counts["nodes"] += 1; counts["refs"] += len(details)
-        counts[{"ok": "ok", "drift": "drift", "changed": "changed", "uncheckable_only": "unch"}[result]] += 1
+        counts[{"ok": "ok", "drift": "drift", "changed": "changed", "moved": "moved", "uncheckable_only": "unch"}[result]] += 1
         fid = graph.add_finding(run_id, n["slug"], result, details)
         findings.append({**n, "finding_id": fid, "result": result, "details": details, "verdict": None, "reason": None})
     judged = bool(complete)
@@ -335,6 +343,7 @@ def run(store, graph, scopes, out=None, accepted=None, complete=None, judge_max=
 
 
 def main(argv=None):
+    load_env()
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--store", required=True); ap.add_argument("--evidence"); ap.add_argument("--scope", action="append", default=[])
     ap.add_argument("--graph"); ap.add_argument("--out", default="reports"); ap.add_argument("--accepted")
@@ -355,7 +364,7 @@ def main(argv=None):
         counts, _, path = run(a.store, g, scopes, a.out, accepted, complete, a.judge_max, a.sample)
     finally:
         g.close()
-    print(f"verify: {counts['nodes']} memories, {counts['refs']} refs — ok {counts['ok']}, drift {counts['drift']}, changed {counts['changed']}, "
+    print(f"verify: {counts['nodes']} memories, {counts['refs']} refs — ok {counts['ok']}, drift {counts['drift']}, changed {counts['changed']}, moved {counts['moved']}, "
           f"uncheckable-only {counts['unch']}, unverifiable {counts['unverifiable']}, judged {counts['judged']} → {path}")
     return 0
 

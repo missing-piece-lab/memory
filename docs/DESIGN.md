@@ -62,6 +62,10 @@ dates are real.*
   with hashlib; no git needed). Same blob next night: `ok`. Different blob: `changed` — the file the memory relies on was
   edited, and the judge decides whether the claim survives, with a diff when the scope is a git repo. CONFIRMED
   re-anchors; anything else fires again. A memory edited since its anchor resets the anchor silently.
+- **Moved is drift-lite** (2026-10-24, from the second cold read of this repo). A reference whose basename turns up
+  elsewhere in the scope used to count as `ok` evidence. Now it is re-anchored to where the file is, reported under its
+  own heading, never judged and never blessed: the fact may well hold, but the memory's path is wrong and a human or the
+  Gardener should fix it. Both the README and `verify.py` say that sentence.
 - **Prose is not symbol evidence** (2026-09-25). A dotted symbol grepped across markdown files string-matched a document
   about something else; the judge was shown that document and cried CONTRADICTED. Symbols grep code files only.
 - **A memory that mentions a retired filename re-harvests it** (2026-09-03). "Renamed from `old.sql`" makes `old.sql` a

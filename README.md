@@ -16,7 +16,7 @@ judges live there and are used here by reference.
 | [`engine/store.py`](engine/store.py) + [`lint.py`](engine/lint.py) | a memory = a markdown file with frontmatter; `MEMORY.md` = one pointer per memory | files are canonical, the database is derived and rebuildable; the index carries no state stamps — state comes from probes |
 | [`ingest.py`](engine/ingest.py) → [`graph_pg.py`](engine/graph_pg.py) / [`graph_mem.py`](engine/graph_mem.py) | files → Postgres + pgvector (or an in-process graph for tests and a first try) | an edited memory loses its embedding; a deleted file is archived, never deleted; `supersedes:` closes a validity window |
 | [`recall.py`](engine/recall.py) + [`hook.py`](engine/hook.py) | hybrid recall (keyword + vector, reciprocal rank fusion, one hop of links) over a token-gated HTTP API; a session hook that recalls N memories for a prompt | rank fusion and nothing cleverer; a flagged memory arrives with its verdict beside it; the hook shows slugs and descriptions, never bodies |
-| [`verify.py`](engine/verify.py) | nightly: every reference a memory asserts, checked in its evidence scope; a model judge on what moved | uncheckable ≠ missing ≠ unverifiable ≠ drift; blob anchors catch a file edited under a memory; a random `ok` memory is re-read each night; report-only, never edits a memory |
+| [`verify.py`](engine/verify.py) | nightly: every reference a memory asserts, checked in its evidence scope; a model judge on what is missing or changed | uncheckable ≠ missing ≠ unverifiable ≠ drift; blob anchors catch a file edited under a memory; a moved reference is re-anchored to where the file now is and reported as `moved` under its own heading — drift-lite: not judged, not counted as ok; a random `ok` memory is re-read each night; report-only, never edits a memory |
 | [`gardener.py`](engine/gardener.py) | a flagged memory → one branch with the minimal dated correction, never a deletion | frontmatter byte-identical, ≤40% of the body, else a dated note; a rejected branch parks the memory for 30 days |
 | [`review.py`](engine/review.py) | a deterministic guard, then a cold model read, then merge or hold | the guard is code, not a prompt: identity, the index, frontmatter, the human's name and big edits are always a human's |
 
@@ -53,7 +53,9 @@ verdicts from a judge), so they are not in the four lines above; `tools/demo.sh`
 same commands judge, draft and review for real.
 
 Production is Postgres + pgvector and a real embedder: `cp .env.example .env`, `docker compose up -d`, then the same
-commands with `GRAPH_DSN` set (the compose file also runs the recall API on loopback). `engine/hook.py` is the session
+commands — every CLI reads `.env` from the current directory first (a shell export still wins), and `ingest` checks the
+embedder's vector length against `EMBED_DIM` before it touches the graph; the compose file also runs the recall API on
+loopback. `engine/hook.py` is the session
 hook: JSON in, JSON out, fail-silent; point your harness's prompt-submit and session-start hooks at it with
 `RECALL_URL` and `RECALL_TOKEN` in its environment. [docs/DESIGN.md](docs/DESIGN.md) has the decisions and their
 dates; [docs/FRONTMATTER.md](docs/FRONTMATTER.md) is the file spec.

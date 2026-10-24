@@ -3,6 +3,7 @@
   EMBED_KIND=openai   any /v1/embeddings-compatible endpoint (EMBED_URL, EMBED_MODEL, EMBED_API_KEY)
   EMBED_KIND=ollama   a local ollama (EMBED_URL default http://127.0.0.1:11434, EMBED_MODEL default nomic-embed-text)
   EMBED_KIND=fake     a deterministic hashed bag-of-words vector (EMBED_DIM, default 64) — tests and a first try
+  EMBED_DIM           the vector length the graph was created with (defaults: ollama 768, openai 1536, fake 64); checked at startup
 
 Asymmetric prefixes: some local models are trained with a task prefix on each side ("search_document: " for stored text,
 "search_query: " for the question) and retrieve off-distribution without them. EMBED_PREFIX=1 adds them; the default is
@@ -19,7 +20,8 @@ def config():
     model = os.environ.get("EMBED_MODEL") or {"ollama": "nomic-embed-text", "openai": "text-embedding-3-small"}.get(kind, "fake")
     prefix = os.environ.get("EMBED_PREFIX", "1" if kind == "ollama" else "0") == "1"
     return {"kind": kind, "url": url.rstrip("/"), "model": model, "prefix": prefix,
-            "key": os.environ.get("EMBED_API_KEY", ""), "dim": int(os.environ.get("EMBED_DIM", "64"))}
+            "key": os.environ.get("EMBED_API_KEY", ""),
+            "dim": int(os.environ.get("EMBED_DIM") or {"ollama": 768, "openai": 1536}.get(kind, 64))}
 
 
 def fake_embed(text, dim=64):

@@ -54,6 +54,10 @@ class PostgresGraph:
         with open(SCHEMA, encoding="utf-8") as fh, self.conn.cursor() as cur:
             cur.execute(fh.read().replace("{dim}", str(dim)))
         self.conn.commit()
+        have = self._q("SELECT atttypmod FROM pg_attribute WHERE attrelid='nodes'::regclass AND attname='embedding'", fetch="one")
+        if have and have[0] > 0 and have[0] != dim:         # the column was created with another dimension: say so, once, at startup
+            raise SystemExit(f"schema: nodes.embedding is vector({have[0]}) but EMBED_DIM is {dim} — set EMBED_DIM={have[0]}, "
+                             f"or `docker compose down -v` and ingest again with the new model")
 
     def save(self):
         self.conn.commit()
@@ -110,6 +114,8 @@ class PostgresGraph:
         return [(s, f"{t}\n{d}\n{b}") for s, t, d, b in self._q("SELECT slug, title, description, body FROM nodes WHERE embedding IS NULL", fetch="all")]
 
     def set_embedding(self, slug, vec):
+        if len(vec) != int(os.environ.get("EMBED_DIM", "768")):
+            raise ValueError(f"refusing to write a {len(vec)}-float vector for {slug}: EMBED_DIM is {os.environ.get('EMBED_DIM', '768')}")
         self._q("UPDATE nodes SET embedding=%s::vector WHERE slug=%s", (vec_literal(vec), slug))
 
     # ── recall ──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -119,10 +125,11 @@ class PostgresGraph:
         return [{"slug": s, "title": t, "description": d, "body": b, "project": p, "type": ty, "score": float(sc),
                  "sim": float(sim) if sim is not None else None} for s, t, d, b, p, ty, sc, sim in rows]
 
-    def neighbors(self, slugs):
+    def neighbors(self, slugs, exclude_types=()):
         out = {}
         for src, dst, title in self._q("""SELECT e.src_slug, n.slug, n.title FROM edges e JOIN nodes n ON n.slug=e.dst_slug
-                WHERE e.src_slug = ANY(%s::text[]) AND e.relation='relates_to' AND n.status='active' AND n.valid_to IS NULL""", (list(slugs),), "all"):
+                WHERE e.src_slug = ANY(%s::text[]) AND e.relation='relates_to' AND n.status='active' AND n.valid_to IS NULL
+                  AND coalesce(n.type,'') <> ALL(%s::text[])""", (list(slugs), list(exclude_types)), "all"):
             out.setdefault(src, []).append({"slug": dst, "title": title})
         return out
 

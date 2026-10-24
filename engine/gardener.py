@@ -21,6 +21,7 @@ import argparse, datetime as dt, difflib, json, os, re, subprocess, sys, tempfil
 import yaml
 
 from . import llm, store as S
+from .config import load_env
 from .graph import open_graph
 
 MAX_CHANGE = 0.40
@@ -180,6 +181,7 @@ def run(repo, graph, out, base="main", complete=None, cap=3, dry_run=False, toda
 
 
 def main(argv=None):
+    load_env()
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--repo", required=True); ap.add_argument("--graph"); ap.add_argument("--out", default="proposals")
     ap.add_argument("--base", default="main"); ap.add_argument("--max", type=int, default=3); ap.add_argument("--dry-run", action="store_true")

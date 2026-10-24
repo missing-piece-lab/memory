@@ -13,6 +13,7 @@ exists, every memory has one index line, no slug twice, lines under 200 characte
 import argparse, os, re, sys
 
 from . import store as S
+from .config import load_env
 
 STATE_WORDS = re.compile(r"\b(LIVE|DONE|BUILT|ARMED|UNARMED|PENDING|PARKED|BLOCKED|STAGED|INSTALLED|IN PROGRESS|NOT STARTED|"
                          r"COMPLETE|SHIPPED|RETIRED|TAKEN DOWN|SUPERSEDED|MERGED|DEPLOYED|RUNNING|DOWN|UP)\b")
@@ -64,6 +65,7 @@ def lint(store):
 
 
 def main(argv=None):
+    load_env()
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--store", required=True)
     a = ap.parse_args(argv)

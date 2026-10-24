@@ -4,8 +4,8 @@
 project: missing-piece-memory
 claims:
   - id: engine-modules
-    says: the engine is thirteen modules, each with a docstring that is its own README
-    probe: test "$(ls engine/*.py | grep -v __init__ | wc -l)" -eq 13 && for f in $(ls engine/*.py | grep -v __init__); do head -c 3 "$f" | grep -q '"""\|#!/' || exit 1; done
+    says: the engine is fourteen modules, each with a docstring that is its own README
+    probe: test "$(ls engine/*.py | grep -v __init__ | wc -l)" -eq 14 && for f in $(ls engine/*.py | grep -v __init__); do head -c 3 "$f" | grep -q '"""\|#!/' || exit 1; done
   - id: example-store-lints-clean
     says: the example store passes the index rule and the frontmatter spec
     probe: python3 -m engine.lint --store example/store >/dev/null

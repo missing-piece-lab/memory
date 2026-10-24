@@ -1,4 +1,5 @@
--- The derived graph. Idempotent: safe to re-run. `{dim}` is the embedding dimension (engine.graph_pg.ensure_schema).
+-- The derived graph. Idempotent: safe to re-run. `{dim}` is the embedding dimension (engine.graph_pg.ensure_schema fills it
+-- from EMBED_DIM). vector(N) is fixed once created: it must match EMBED_DIM and the model; ensure_schema refuses a mismatch.
 -- The files are canonical; every table here is rebuilt by `python -m engine.ingest` except the findings history.
 CREATE EXTENSION IF NOT EXISTS vector;
 
