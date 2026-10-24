@@ -81,8 +81,9 @@ commands — every CLI reads `.env` from the current directory first (a shell ex
 embedder's vector length against `EMBED_DIM` before it touches the graph; the compose file also runs the recall API on
 loopback. `engine/hook.py` is the session
 hook: JSON in, JSON out, fail-silent; point your harness's prompt-submit and session-start hooks at it with
-`RECALL_URL` and `RECALL_TOKEN` in its environment. [docs/DESIGN.md](docs/DESIGN.md) has the decisions and their
-dates; [docs/FRONTMATTER.md](docs/FRONTMATTER.md) is the file spec.
+`RECALL_URL` and `RECALL_TOKEN` in its environment. [docs/LAYERS.md](docs/LAYERS.md) is the setup guide: what loads
+into the agent, in what order, how big, and the one mistake that makes a collaborator a stranger overnight;
+[docs/DESIGN.md](docs/DESIGN.md) has the decisions and their dates; [docs/FRONTMATTER.md](docs/FRONTMATTER.md) is the file spec.
 
 ## What a review said
 
