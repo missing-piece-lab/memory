@@ -52,6 +52,8 @@ dates are real.*
   <img alt="Recall: a keyword leg and a vector leg, top 50 each, fused by reciprocal rank fusion with k=60; the memory first on both legs scores 1/61 + 1/61 = 0.0328, one second on one leg 1/62 = 0.0161; then one hop of links." src="recall-light.svg" width="880">
 </picture>
 
+*Two legs, one fused score, on the example store. The arithmetic is the real one.*
+
 ## The Verifier
 
 - **Uncheckable is not missing** (2026-07-05, the first sweep). Twenty drift findings, half of them the checker's own
