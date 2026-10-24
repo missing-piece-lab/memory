@@ -9,8 +9,8 @@ An agent's context window at the start of a session is the only "self" it has. W
 is who shows up. A memory system is therefore not a database question first; it is a question of **layers**: a small
 layer that is always there and says who the agent is and how the two of you work, a middle layer that says what exists
 and where, and a deep layer that is fetched on demand. Get the layers right and the store can grow for months without the
-agent changing. Get them wrong and the agent becomes a stranger overnight: that happened to us once (2026-09-08) and it
-is the reason this page exists.
+agent changing. Get them wrong and the agent becomes a stranger overnight: that happened to us once (built 2026-09-07,
+rolled back that night, into 09-08) and it is the reason this page exists.
 
 ## The four layers
 
@@ -29,7 +29,7 @@ never arrives unasked.
 
 The obvious optimisation is a tiered index: a small always-loaded core, a catalog, a long tail, generated nightly. We
 built exactly that (2026-09-07, after six models reviewed the system and all six wanted a smaller window) and rolled it
-back the same night. The human opened a fresh session and said he almost did not recognize the agent. Two things had
+back that night. The human opened a fresh session and said they almost did not recognize the agent. Two things had
 happened: a byte-shave had trimmed the words in the index hooks that carried the voice, and a generated catalog of a
 hundred project lines had pushed the few lines about the pair down the page. The build had answered six reviewers instead
 of one person.
@@ -72,8 +72,8 @@ it to have one). Measure the result from outside (the `pulse` instrument) and ne
 
 ## Sizes, and what happens at the edges
 
-- **Layer 1 + layer 2 together should fit well inside what the harness loads at start.** Ours sits around 25 KB for the
-  index and a few KB for identity. When the index approaches the edge, compact lines, do not generate tiers.
+- **Layer 1 + layer 2 together should fit well inside what the harness loads at start.** Ours sat around 25 KB for the
+  index and a few KB for identity (October 2026). When the index approaches the edge, compact lines, do not generate tiers.
 - **Every memory is one fact.** A memory that grows by dated paragraphs is a log; the fact is whatever is true now, with
   the history folded into a clause. Rewrite, do not append (`docs/FRONTMATTER.md`).
 - **Every memory declares its evidence scope** (`metadata.project`). The Verifier checks it only against that tree.
@@ -98,7 +98,7 @@ it to have one). Measure the result from outside (the `pulse` instrument) and ne
 
 ## What we still don't know
 
-Whether the flat index holds past a thousand memories (ours is in the hundreds). Whether recall should ever carry a
+Whether the flat index holds past a thousand memories (ours was in the hundreds, October 2026). Whether recall should ever carry a
 body (we say no; we have not tested the alternative against a person). How much of the ambient identity lives in the
 hooks versus layer 1 (our persona measurements say the voice survives index changes that keep the pair's lines on top,
 and does not survive ones that bury them; that is one pair's evidence).
