@@ -4,9 +4,11 @@ Every test is offline: a fake embedder, a fake judge, the in-process graph, temp
 import glob, os, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "tests"))
+from conftest import offline_env  # a production .env beside the tests must not reach them
 red = []
 for t in sorted(glob.glob(os.path.join(ROOT, "tests", "test_*.py"))):
-    r = subprocess.run([sys.executable, t], capture_output=True, text=True, cwd=ROOT)
+    r = subprocess.run([sys.executable, t], capture_output=True, text=True, cwd=ROOT, env=offline_env())
     name = os.path.relpath(t, ROOT)
     print(f"{'ok ' if r.returncode == 0 else 'RED'} {name}")
     if r.returncode:
