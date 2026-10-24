@@ -11,7 +11,8 @@ Tier 1, deterministic. Every reference the body asserts (engine.store.extract_re
 memory's OWN scope: a path exists (`ok`) · its basename exists in that scope (`moved`) · it is gone (`missing`); a
 dotted symbol greps on a word boundary across that scope's code files (`ok`/`missing`); flags, URLs, templates, absolute
 paths, data files are `uncheckable`. A hit in any OTHER mounted scope is `elsewhere`: a hint for the human, never
-evidence (2026-10-24 — common names like README.md made false oks). An `ok` reference is pinned to the git blob of the
+evidence (2026-10-24 — common names like README.md made false oks); that holds even when the memory's own scope is not
+mounted here — a file seen in another tree is a hint, where nothing seen would be `unverifiable`. An `ok` reference is pinned to the git blob of the
 file it resolved to; a different blob next night is `changed`. A `missing` reference whose scope is not mounted here is
 `unverifiable` — an evidence gap, never drift. A moved reference is re-anchored to where the file now is and reported as
 `moved` under its own heading — drift-lite: not judged, not counted as ok; the memory needs its path fixed; `elsewhere`
@@ -203,8 +204,9 @@ def anchor(graph, slug, updated_at, details, scopes):
     changed = 0
     for d in details:
         if d["status"] not in ("ok", "moved") or d["kind"] not in ("path", "symbol"):
-            if d["ref"] in old and d["status"] in ("elsewhere", "missing", "unverifiable"):
+            if d["ref"] in old and d["status"] in ("elsewhere", "missing"):
                 graph.clear_anchor(slug, d["ref"]); d["anchor"] = "cleared"       # a pin from a night this ref read ok must not judge the next one
+            # `unverifiable` keeps its pin: the evidence is absent tonight, not wrong; the pin still catches an edit made during the gap
             continue
         name, _, rel = d["found_in"].partition("/")
         sha = scopes[name].blob_sha(rel) if name in scopes else None
