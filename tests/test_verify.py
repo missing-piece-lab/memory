@@ -81,7 +81,7 @@ def test_sample_judge_error_unverifiable_accepted():
     counts, findings, _ = V.run(store, g, V.discover(evidence))
     d = next(f for f in findings if f["slug"] == "thresholds-live-in-yaml")["details"]
     assert any(x["status"] == "moved" and x["found_in"] == "crumbledger/thresholds.yml" for x in d)
-    assert V.main(["--store", store, "--evidence", evidence, "--graph", os.path.join(tmp, "g2.json"), "--out", os.path.join(tmp, "r3"), "--no-judge"]) == 0
+    assert V.main(["--store", store, "--evidence", evidence, "--graph", os.path.join(tmp, "g.json"), "--out", os.path.join(tmp, "r3"), "--no-judge"]) == 0
 
 
 if __name__ == "__main__":

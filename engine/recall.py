@@ -12,7 +12,7 @@
 
 Ranking is reciprocal rank fusion of two legs (keyword, vector), nothing more: no recency, no confidence, no weights.
 `score` is rank-based and cannot say "nothing relevant"; `sim` (cosine from the vector leg, None for a keyword-only
-hit) can — the hook uses it as a floor. `related` = one hop along [[links]]. `verdict` appears only when the Verifier has
+hit) can — the hook uses it as a floor. An unreachable embedder degrades to the keyword leg alone, with one stderr line. `related` = one hop along [[links]]. `verdict` appears only when the Verifier has
 flagged the memory (2-of-3), so a session reads the doubt beside the memory instead of trusting it blind.
 """
 import argparse, json, os, sys
@@ -25,7 +25,11 @@ MAX_K = 8
 
 
 def recall(graph, query, k=3, exclude_types=(), source="cli", session=None, embed_fn=None):
-    qvec = (embed_fn or (lambda t: E.embed(t, kind="query")))(query)
+    try:
+        qvec = (embed_fn or (lambda t: E.embed(t, kind="query")))(query)
+    except Exception as e:                      # the embedder is down: keyword leg only, said once on stderr, never a failure
+        print(f"recall: embedder unreachable ({type(e).__name__}) — keyword-only for this query", file=sys.stderr)
+        qvec = None
     rows = graph.recall(query, qvec, min(int(k), MAX_K), exclude_types)
     related = graph.neighbors([r["slug"] for r in rows])
     flagged = {f["slug"]: f for f in graph.flagged()}

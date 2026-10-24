@@ -14,10 +14,10 @@ SCHEMA = os.path.join(os.path.dirname(HERE), "db", "schema.sql")
 
 RECALL_SQL = """
 WITH q AS (SELECT %(emb)s::vector AS emb, websearch_to_tsquery('english', %(text)s) AS tsq),
-live AS (SELECT * FROM nodes WHERE status='active' AND valid_to IS NULL AND coalesce(type,'') <> ALL(%(excl)s)),
+live AS (SELECT * FROM nodes WHERE status='active' AND valid_to IS NULL AND coalesce(type,'') <> ALL(%(excl)s::text[])),
 vec AS (SELECT id, row_number() OVER (ORDER BY embedding <=> (SELECT emb FROM q)) AS rnk,
                1 - (embedding <=> (SELECT emb FROM q)) AS sim
-        FROM live WHERE embedding IS NOT NULL ORDER BY embedding <=> (SELECT emb FROM q) LIMIT 50),
+        FROM live WHERE embedding IS NOT NULL AND %(has_vec)s::boolean ORDER BY embedding <=> (SELECT emb FROM q) LIMIT 50),
 kw AS (SELECT id, row_number() OVER (ORDER BY ts_rank(content_tsv, (SELECT tsq FROM q)) DESC) AS rnk
        FROM live WHERE content_tsv @@ (SELECT tsq FROM q) LIMIT 50),
 fused AS (SELECT id, SUM(1.0/(60 + rnk)) AS score FROM (SELECT id, rnk FROM vec UNION ALL SELECT id, rnk FROM kw) u GROUP BY id)
@@ -29,7 +29,7 @@ FLAGGED_SQL = """
 WITH recent AS (
   SELECT f.node_id, f.id, f.verdict, f.reason, f.created_at,
          row_number() OVER (PARTITION BY f.node_id ORDER BY f.id DESC) AS rn
-  FROM findings f JOIN nodes n ON n.id = f.node_id WHERE f.created_at > n.updated_at)
+  FROM findings f JOIN nodes n ON n.id = f.node_id WHERE f.created_at > n.updated_at AND f.verdict IS NOT NULL)
 SELECT n.slug, n.project,
        (array_agg(r.verdict ORDER BY r.id DESC) FILTER (WHERE r.verdict IN ('STALE','CONTRADICTED')))[1],
        (array_agg(r.reason  ORDER BY r.id DESC) FILTER (WHERE r.verdict IN ('STALE','CONTRADICTED')))[1],
@@ -104,7 +104,7 @@ class PostgresGraph:
         return closed, reopened
 
     def archive_missing(self, keep):
-        return self._q("UPDATE nodes SET status='archived', updated_at=now() WHERE status='active' AND NOT (slug = ANY(%s::text[]))", (list(keep),))
+        return self._q("UPDATE nodes SET status='archived', updated_at=now() WHERE status='active' AND NOT (slug = ANY(%s::text[]))", (list(keep),))  # noqa
 
     def unembedded(self):
         return [(s, f"{t}\n{d}\n{b}") for s, t, d, b in self._q("SELECT slug, title, description, body FROM nodes WHERE embedding IS NULL", fetch="all")]
@@ -114,7 +114,8 @@ class PostgresGraph:
 
     # ── recall ──────────────────────────────────────────────────────────────────────────────────────────────────
     def recall(self, query, qvec, k=5, exclude_types=()):
-        rows = self._q(RECALL_SQL, {"emb": vec_literal(qvec), "text": query, "excl": list(exclude_types), "k": k}, "all")
+        rows = self._q(RECALL_SQL, {"emb": vec_literal(qvec) if qvec else None, "has_vec": bool(qvec), "text": query,
+                                    "excl": list(exclude_types), "k": k}, "all")
         return [{"slug": s, "title": t, "description": d, "body": b, "project": p, "type": ty, "score": float(sc),
                  "sim": float(sim) if sim is not None else None} for s, t, d, b, p, ty, sc, sim in rows]
 

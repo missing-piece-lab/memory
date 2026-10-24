@@ -28,22 +28,29 @@ the in-process graph and the fake embedder; the tests never touch Postgres or a 
 ```
 git clone <this repo> && cd missing-piece-memory
 pip install pyyaml
-python tests/run.py                                        # every test, offline, then tools/check.sh (the scrub gate)
+python tests/run.py        # every test, offline, then tools/check.sh: the scrub gate (secret-shaped strings and the size
+                           #   cap always; your own private-words list only when one is present — its summary line says which)
+bash tools/demo.sh         # the whole loop, offline, in a temp dir: lint → ingest → recall → verify (twice, with a scripted
+                           #   judge) → the Gardener's branch → the review lane's merge. Read it; it is the first hour.
+```
 
-python -m engine.lint   --store example/store              # the index rule and the frontmatter spec
+The example store is ten memories about a fictional bakery's inventory tool. Seven of them carry references into the
+evidence tree and the Verifier checks those seven; one names a file that is not there and comes back as drift. The demo
+uses `EMBED_KIND=fake` and `MODEL_KIND=fake` — a hashed bag-of-words embedder and a scripted judge that calls every
+missing reference STALE — so nothing is called and nothing is learned about quality; the point is to see each piece
+hand to the next. The same commands, one at a time:
+
+```
+python -m engine.lint   --store example/store                                 # the index rule and the frontmatter spec
 python -m engine.ingest --store example/store --graph graph.json
 python -m engine.recall "when do we reorder flour" --graph graph.json
 python -m engine.verify --store example/store --evidence example/evidence --graph graph.json --no-judge
 ```
 
-The example store is ten memories about a fictional bakery's inventory tool; one of them is wrong on purpose and the
-Verifier finds it. With a model configured (`MODEL_KIND`, `MODEL_NAME`, `MODEL_API_KEY` — the Messages API or any
-chat-completions door), the same `verify` judges the drift, and the nightly continues:
-
-```
-python -m engine.gardener --repo example/store --graph graph.json --out proposals     # branches + proposal files
-python -m engine.review gardener/<slug>-<date> --repo example/store --proposal proposals/<branch>.md --human <name>
-```
+The Gardener and the review lane need a store that is a git checkout and a flagged memory (two STALE/CONTRADICTED
+verdicts from a judge), so they are not in the four lines above; `tools/demo.sh` sets both up. With a real model
+(`MODEL_KIND` anthropic or openai, `MODEL_NAME`, `MODEL_API_KEY` — the Messages API or any chat-completions door) the
+same commands judge, draft and review for real.
 
 Production is Postgres + pgvector and a real embedder: `cp .env.example .env`, `docker compose up -d`, then the same
 commands with `GRAPH_DSN` set (the compose file also runs the recall API on loopback). `engine/hook.py` is the session
@@ -51,17 +58,14 @@ hook: JSON in, JSON out, fail-silent; point your harness's prompt-submit and ses
 `RECALL_URL` and `RECALL_TOKEN` in its environment. [docs/DESIGN.md](docs/DESIGN.md) has the decisions and their
 dates; [docs/FRONTMATTER.md](docs/FRONTMATTER.md) is the file spec.
 
-## What a peer review said
+## What a review said
 
-In September 2026 the system this is cut from went to a panel of frontier models from different labs, one seat each,
-text only, on a scrubbed documentation packet. They agreed on one sentence: it was a verified wiki with a janitor. One
-memory across projects and machines — delivered. Stays true over time — engineered for real, and none of them knew a
-personal memory system that re-checks claims against live git with blob anchors and proposes fixes as pull requests.
-Learns the person — not built, and not measured. They also found that the documents describing the anti-staleness
-machinery were the stalest thing in the packet, that `ok` is not `true` (a memory wrong from birth whose files never
-change was never re-read), that edited memories kept their old embeddings, and that the private tier leaked on one
-path. The random nightly sample, the embedding reset on edit, the task prefixes and the type exclusion on every recall
-path all date from that review. This repo is the janitor; the learning is the open problem.
+In an internal review by several models in September 2026, reading a scrubbed documentation packet of the system this
+is cut from, reviewers summarized the design as "a verified wiki with a janitor" and asked for: a random re-read of
+memories whose checks pass (a memory wrong from birth whose files never change is otherwise never looked at again);
+embeddings reset when a memory is edited; task prefixes for the embedding model; the type exclusion applied on every
+recall path, not one client; and the documentation brought in line with the running system. All five are in this repo.
+What the review found missing — anything that learns the person over time, and a way to measure it — is not.
 
 ## What this is not
 

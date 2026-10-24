@@ -99,7 +99,10 @@ def discover(evidence=None, scopes=()):
                 found[name] = Scope(name, os.path.join(evidence, name))
     for spec in scopes:
         name, _, path = spec.partition("=")
-        found[name] = Scope(name, path)
+        if os.path.isdir(path):
+            found[name] = Scope(name, path)
+        else:
+            print(f"verify: scope {name!r}: {path!r} is not a directory — treated as not mounted (its memories are unverifiable)", file=sys.stderr)
     return found
 
 
@@ -295,6 +298,8 @@ def report(ts, scopes, counts, findings, judged):
 
 
 def run(store, graph, scopes, out=None, accepted=None, complete=None, judge_max=10, sample_n=3, rng=random):
+    if not graph.count_active():
+        raise SystemExit("verify: nothing ingested yet: run ingest first (python -m engine.ingest --store DIR)")
     ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     run_id = graph.start_run("report")
     counts = dict(nodes=0, refs=0, ok=0, drift=0, changed=0, unch=0, accepted=0, unverifiable=0, judged=0)

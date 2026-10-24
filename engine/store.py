@@ -72,6 +72,8 @@ def parse(text):
 def _list(v):
     if not v:
         return []
+    if not isinstance(v, (str, list, tuple)):
+        raise FrontmatterError(f"supersedes is {type(v).__name__}, not a slug or a list of slugs")
     v = [v] if isinstance(v, str) else list(v)
     return [str(x).strip().removesuffix(".md") for x in v if str(x).strip()]
 

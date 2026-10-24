@@ -2,6 +2,8 @@
 
   MODEL_KIND=anthropic   the Messages API (MODEL_BASE_URL default https://api.anthropic.com)
   MODEL_KIND=openai      any /chat/completions-compatible door (MODEL_BASE_URL, e.g. a local router)
+  MODEL_KIND=fake        a scripted judge for the demo and tests: every missing reference is STALE, everything else
+                         CONFIRMED, every draft is returned unchanged (→ note-only), every review is MERGE. It learns nothing.
   MODEL_NAME             the model; VERIFIER_MODEL / GARDENER_MODEL / REVIEW_MODEL override it per job
   MODEL_API_KEY          read, never printed
 
@@ -12,7 +14,18 @@ import json, os, urllib.request
 
 
 def available():
+    if os.environ.get("MODEL_KIND", "").lower() == "fake":
+        return True
     return bool(os.environ.get("MODEL_API_KEY")) and bool(os.environ.get("MODEL_NAME"))
+
+
+def fake_complete(system, user):
+    if "<file>" in user:                                                        # the Gardener: hand the file back unchanged
+        return user[user.index("<file>"):user.index("</file>") + 7]
+    if "PROPOSAL" in user and "DIFF" in user:                                   # the reviewer
+        return "MERGE: scripted reviewer — the proposal cites the evidence and the edit is fact-class"
+    stale = "-> missing" in user
+    return json.dumps({"verdict": "STALE" if stale else "CONFIRMED", "reason": "scripted judge: " + ("a reference is missing" if stale else "every reference resolved")})
 
 
 def model_for(job):
@@ -21,6 +34,8 @@ def model_for(job):
 
 def complete(system, user, model=None, max_tokens=1200, timeout=180):
     kind = os.environ.get("MODEL_KIND", "anthropic").lower()
+    if kind == "fake":
+        return fake_complete(system, user)
     key = os.environ.get("MODEL_API_KEY", "")
     model = model or os.environ.get("MODEL_NAME", "")
     if not key or not model:

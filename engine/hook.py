@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """hook — recall N memories for the prompt a session is about to answer, as a harness hook. Stdlib only, fail-silent.
 
-Reads one JSON object on stdin (the shape most agent harnesses pass their hooks; Claude Code's is the default):
+Reads one JSON object on stdin. The default JSON shape is the common agent-CLI hook convention (session_id and prompt
+in on stdin; additionalContext out); adapt the two field names for yours:
   {"hook_event_name": "UserPromptSubmit", "session_id": "...", "prompt": "...", "cwd": "..."}
   {"hook_event_name": "SessionStart",     "session_id": "...", "cwd": "..."}
 and prints {"hookSpecificOutput": {"hookEventName": ..., "additionalContext": "..."}} with the slug, description and
 any Verifier verdict of each memory — never bodies (the session pulls a body by asking). SessionStart recalls against
-the launch directory's name and its last three commit subjects. A memory already shown this session is not shown again.
+the launch directory's name and its last three commit subjects. A memory already shown this session is not shown again;
+the seen-state is keyed by session AND by the recall URL, so two stores never share it.
 Short prompts (< 20 chars) and slash-commands recall nothing. Any failure → no output, exit 0: a memory hook that can
 break a session is worse than none.
 
 Config: RECALL_URL (default http://127.0.0.1:8450), RECALL_TOKEN, HOOK_K (3), HOOK_MIN_SIM (0.60 — a cosine floor from a
 vector-leg hit; keyword-only hits pass), HOOK_EXCLUDE_TYPES (comma list, default empty).
 """
-import json, os, re, subprocess, sys, tempfile, urllib.request
+import hashlib, json, os, re, subprocess, sys, tempfile, urllib.request
 
 MIN_PROMPT = 20
 
@@ -40,6 +42,10 @@ def session_query(cwd):
     except Exception:
         pass
     return " ".join(parts)[:400]
+
+
+def state_path(sid, url):
+    return os.path.join(tempfile.gettempdir(), f"memory-hook-{hashlib.sha1(url.encode()).hexdigest()[:10]}-{re.sub(r'[^A-Za-z0-9_-]', '', sid)}.json")
 
 
 def render(results, seen, min_sim, label):
@@ -73,7 +79,7 @@ def main(stdin=None, c=None, recall_fn=None):
         results = (recall_fn or recall)(query, c, sid)
     except Exception:
         return 0
-    state = os.path.join(tempfile.gettempdir(), f"memory-hook-{re.sub(r'[^A-Za-z0-9_-]', '', sid)}.json")
+    state = state_path(sid, c["url"])
     try:
         seen = set(json.load(open(state)))
     except Exception:

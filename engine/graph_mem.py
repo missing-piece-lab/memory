@@ -177,13 +177,14 @@ class MemoryGraph:
         return sorted(rows, key=lambda f: -f["id"])[:limit]
 
     def flagged(self):
-        """The one definition of flagged: among the findings written after the memory's last content change, at least
-        2 of the last 3 carry STALE or CONTRADICTED. A flapping judge never flags alone; an edit voids everything."""
+        """The one definition of flagged: among the JUDGED findings written after the memory's last content change, at
+        least 2 of the last 3 carry STALE or CONTRADICTED. An unjudged night (no model, a judge error) is not a vote
+        either way; a flapping judge never flags alone; an edit voids everything."""
         out = []
         for slug, n in sorted(self.d["nodes"].items()):
             if n["status"] != "active" or n["valid_to"] is not None:
                 continue
-            recent = [f for f in self.findings(slug) if f["created_at"] > n["updated_at"]][:3]
+            recent = [f for f in self.findings(slug, limit=50) if f["created_at"] > n["updated_at"] and f["verdict"]][:3]
             bad = [f for f in recent if f["verdict"] in ("STALE", "CONTRADICTED")]
             if len(bad) >= 2:
                 out.append({"slug": slug, "project": n["project"], "verdict": bad[0]["verdict"], "reason": bad[0]["reason"],

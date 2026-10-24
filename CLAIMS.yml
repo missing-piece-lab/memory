@@ -16,10 +16,10 @@ claims:
     probe: rm -f /tmp/claims-probe-graph.json && EMBED_KIND=fake python3 -m engine.ingest --store example/store --graph /tmp/claims-probe-graph.json --no-embed >/dev/null && python3 -m engine.verify --store example/store --evidence example/evidence --graph /tmp/claims-probe-graph.json --out /tmp/claims-probe-reports --no-judge | grep -q "drift 1,"
     subject: [example, drift]
   - id: scrub-gate-clean
-    says: the scrub gate finds nothing private and nothing secret-shaped
+    says: the scrub gate finds no secret-shaped string and the repo is under the size cap; private words are checked only when a list is present at ~/.config/missing-piece/private-words, and the gate's summary line says which
     probe: bash tools/check.sh >/dev/null
-    subject: [scrub, private]
-    contradicts: {false: [clean, scrubbed]}
+    subject: [scrub, gate]
+    contradicts: {false: [clean]}
   - id: line-count
     says: lines in the repo (the budget is 4,000)
     probe: find . -path ./.git -prune -o -type f \( -name '*.py' -o -name '*.md' -o -name '*.yml' -o -name '*.yaml' -o -name '*.sh' -o -name '*.toml' -o -name '*.sql' -o -name '*.example' -o -name 'LICENSE' \) -print0 | xargs -0 cat | wc -l
