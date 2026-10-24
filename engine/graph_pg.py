@@ -158,6 +158,9 @@ class PostgresGraph:
                    ON CONFLICT (slug, ref) DO UPDATE SET repo_path=EXCLUDED.repo_path, blob_sha=EXCLUDED.blob_sha, anchored_at=now()""",
                 (slug, ref, repo_path, sha))
 
+    def clear_anchor(self, slug, ref):
+        self._q("DELETE FROM anchors WHERE slug=%s AND ref=%s", (slug, ref))
+
     def start_run(self, mode):
         return self._q("INSERT INTO runs (mode) VALUES (%s) RETURNING id", (mode,), "one")[0]
 

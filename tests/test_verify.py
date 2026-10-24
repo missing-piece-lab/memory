@@ -89,6 +89,7 @@ def test_elsewhere_is_not_evidence():
     tmp, store, evidence, g = world()
     other = os.path.join(evidence, "othertool", "src"); os.makedirs(other)
     open(os.path.join(other, "export_xlsx.py"), "w").write("# a different project's file with the same name\n")
+    g.set_anchor("spreadsheet-export-retired", "src/export_xlsx.py", "othertool/src/export_xlsx.py", "f" * 40)   # a pin from a night this read ok
     counts, findings, path = V.run(store, g, V.discover(evidence), out=os.path.join(tmp, "r4"))
     f = next(f for f in findings if f["slug"] == "spreadsheet-export-retired")
     d = next(x for x in f["details"] if x["ref"] == "src/export_xlsx.py")

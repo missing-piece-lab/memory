@@ -158,6 +158,9 @@ class MemoryGraph:
     def set_anchor(self, slug, ref, repo_path, sha):
         self.d["anchors"].setdefault(slug, {})[ref] = [sha, now(), repo_path]
 
+    def clear_anchor(self, slug, ref):
+        self.d["anchors"].get(slug, {}).pop(ref, None)
+
     def start_run(self, mode):
         self.d["runs"].append({"id": len(self.d["runs"]) + 1, "started_at": now(), "finished_at": None, "mode": mode})
         return self.d["runs"][-1]["id"]

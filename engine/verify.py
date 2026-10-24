@@ -143,10 +143,6 @@ def classify(ref):
     return "unknown", None
 
 
-def order(project, scopes):
-    return [project] + [n for n in scopes if n != project] if project in scopes else list(scopes)
-
-
 def check_ref(ref, project, scopes, store):
     kind, payload = classify(ref)
     if kind not in ("path", "symbol"):
@@ -207,6 +203,8 @@ def anchor(graph, slug, updated_at, details, scopes):
     changed = 0
     for d in details:
         if d["status"] not in ("ok", "moved") or d["kind"] not in ("path", "symbol"):
+            if d["ref"] in old and d["status"] in ("elsewhere", "missing", "unverifiable"):
+                graph.clear_anchor(slug, d["ref"]); d["anchor"] = "cleared"       # a pin from a night this ref read ok must not judge the next one
             continue
         name, _, rel = d["found_in"].partition("/")
         sha = scopes[name].blob_sha(rel) if name in scopes else None
