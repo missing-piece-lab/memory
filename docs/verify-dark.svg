@@ -24,12 +24,13 @@
 <rect x="640" y="156" width="225" height="48" rx="10" fill="#2d1416" stroke="#f85149"/>
 <text x="654" y="178" font-size="13.5" font-weight="600" fill="#f85149">drift</text>
 <text x="654" y="192" font-size="11.5" fill="#9198a1" text-anchor="start">missing or changed</text>
-<rect x="640" y="236" width="290" height="104" rx="10" fill="#161b22" stroke="#3d444d"/>
+<rect x="640" y="236" width="290" height="120" rx="10" fill="#161b22" stroke="#3d444d"/>
 <text x="654" y="258" class="m" font-size="13.5" font-weight="600" fill="#a371f7">tier 2 · a model judge</text>
 <text x="654" y="276" font-size="12" fill="#9198a1">reads the memory and the evidence,</text>
 <text x="654" y="292" font-size="12" fill="#9198a1">capped per night</text>
-<text x="654" y="308" font-size="12" fill="#9198a1">CONFIRMED · UNCLEAR · STALE · CONTRADICTED</text>
-<text x="654" y="324" font-size="12" fill="#9198a1">a flag only on 2 of 3 STALE / CONTRADICTED</text>
+<text x="654" y="308" font-size="12" fill="#9198a1">CONFIRMED · UNCLEAR ·</text>
+<text x="654" y="324" font-size="12" fill="#9198a1">STALE · CONTRADICTED</text>
+<text x="654" y="340" font-size="12" fill="#9198a1">a flag only on 2 of 3 STALE / CONTRADICTED</text>
 <rect x="970" y="258" width="110" height="60" rx="10" fill="#2d1416" stroke="#f85149"/>
 <text x="984" y="280" class="m" font-size="13.5" font-weight="600" fill="#f85149">gardener.py</text>
 <text x="984" y="298" font-size="12" fill="#9198a1">one branch</text>
